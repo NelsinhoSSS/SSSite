@@ -1,8 +1,140 @@
 ﻿@{
-    Layout = "_Layout";
+    ViewData["Title"] = "Lobby";
+    string mensagemDoDragão = "Olá! me chamo Nelson e estudo TI, bem vindo a meu site que uso para treinar e aprender sobre progamção, fique a vontade para olhar em volta!";
 }
-<div style="width: 100vw; height: calc(100vh - 56px); margin: 0; padding: 0; overflow: hidden; background-color: black;">
-    <img src="~/img/urdragon.jpg"
-         style="width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block;"
-         alt="Ur-Dragon" />
+
+<div class="lobby-scene">
+    <div class="bg-container">
+        <img src="~/img/urdragon.jpg" alt="Ur-Dragon Background" class="bg-image" />
+    </div>
+
+    <div class="electric-border">
+        <div class="eb-layers">
+            <div class="eb-glow-1"></div>
+            <div class="eb-glow-2"></div>
+            <div class="eb-background-glow"></div>
+        </div>
+
+        <div class="eb-content">
+            <div class="message-text">
+                <h2>Hello world!</h2>
+                <hr />
+                <p>@mensagemDoDragão</p>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+    .lobby-scene {
+        position: relative;
+        width: 100vw;
+        height: calc(100vh - 56px); /* Desconta a altura do header roxo */
+        overflow: hidden;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        background-color: #000;
+    }
+
+    .bg-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+
+    .bg-image {
+        width: 100%;
+        height: 100%;
+        /* PREENCHIMENTO TOTAL: */
+        object-fit: cover;
+        /* AJUSTE DE FOCO: Centraliza e foca no topo (onde estão as cabeças) */
+        object-position: center 20%;
+        display: block;
+    }
+
+    /* QUADRO ELÉTRICO */
+    .electric-border {
+        position: relative;
+        z-index: 10;
+        margin-right: 8%; /* Usando % para melhor resposta em telas diferentes */
+        width: 380px;
+        min-height: 240px;
+        border-radius: 15px;
+        isolation: isolate;
+        background: rgba(10, 5, 15, 0.8); /* Fundo bem escuro e translúcido */
+        backdrop-filter: blur(4px); /* Efeito de vidro fosco opcional */
+    }
+
+    .eb-content {
+        position: relative;
+        z-index: 2;
+        padding: 25px;
+        color: #fff;
+        text-align: center;
+    }
+
+    .message-text h2 {
+        color: #bc6ff1;
+        font-size: 1.4rem;
+        letter-spacing: 2px;
+        margin-bottom: 5px;
+    }
+
+    .message-text p {
+        font-style: italic;
+        font-size: 1.05rem;
+        color: #ccc;
+    }
+
+    /* EFEITO ELÉTRICO CSS */
+    .eb-layers {
+        position: absolute;
+        inset: -2px;
+        border-radius: inherit;
+        z-index: 1;
+    }
+
+    .eb-glow-1 {
+        border: 2px solid rgba(157, 78, 221, 0.9);
+        filter: blur(1px);
+        animation: spark 4s infinite;
+    }
+
+    .eb-glow-2 {
+        border: 4px solid rgba(157, 78, 221, 0.3);
+        filter: blur(10px);
+    }
+
+    .eb-background-glow {
+        background: rgba(157, 78, 221, 0.2);
+        filter: blur(40px);
+        transform: scale(1.1);
+        z-index: -1;
+    }
+
+    @@keyframes spark {
+        0%, 100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.8;
+        }
+
+        90% {
+            opacity: 1;
+        }
+
+        92% {
+            opacity: 0.4;
+        }
+
+        94% {
+            opacity: 1;
+        }
+    }
+</style>
