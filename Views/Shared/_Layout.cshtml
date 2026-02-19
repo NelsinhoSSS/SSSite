@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ur-Dragon Site</title>
+    <title>SSSite</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <style>
         .bg-purple {
@@ -31,9 +31,12 @@
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item"><a class="nav-link" href="/">Lobby</a></li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Jogos</a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#">Galactic Defender</a></li>
+                            <a class="nav-link dropdown-toggle" href="#" id="navJogos" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Jogos
+                            </a>
+                            <ul class="dropdown-menu shadow" aria-labelledby="navJogos">
+                                <li><a class="dropdown-item" asp-controller="Home" asp-action="GalacticDefender">Galactic Defender</a></li>
+
                                 <li><a class="dropdown-item" href="#">Shuffle Cups</a></li>
                             </ul>
                         </li>

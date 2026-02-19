@@ -16,6 +16,11 @@ namespace SSSite.Controllers
             return View();
         }
 
+        public IActionResult GalacticDefender()
+        {
+            return View("~/Views/Jogos/GalaxyDefender.cshtml");
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
