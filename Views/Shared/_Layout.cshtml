@@ -3,47 +3,71 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SSSite</title>
+    <title>@ViewData["Title"] - SSSite</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <style>
-        .bg-purple {
-            background-color: #663399 !important;
-        }
-
-        body, html {
+        /* Estilos globais para garantir o tema escuro */
+        body {
+            background-color: #0a0a0c;
+            color: white;
             margin: 0;
             padding: 0;
             overflow-x: hidden;
-            background-color: #050505;
         }
 
-        .navbar-dark .navbar-nav .nav-link {
-            color: white !important;
+        /* Estilo personalizado para o nome do site */
+        .navbar-brand-custom {
+            color: #bc6ff1 !important;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(188, 111, 241, 0.5);
+            transition: 0.3s;
+            text-decoration: none;
+            font-size: 1.5rem;
         }
+
+            .navbar-brand-custom:hover {
+                color: #ffffff !important;
+                text-shadow: 0 0 15px #bc6ff1;
+            }
+
+        /* Ajuste para o dropdown no modo escuro */
+        .dropdown-menu-dark {
+            background-color: #15151e;
+            border: 1px solid #3d2b56;
+        }
+
+        .dropdown-item {
+            color: #ccc !important;
+        }
+
+            .dropdown-item:hover {
+                background-color: #3d2b56 !important;
+                color: white !important;
+            }
     </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-purple mb-0">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark border-bottom" style="background-color: #0a0a0c; border-color: #3d2b56 !important;">
             <div class="container-fluid">
-                <a class="navbar-brand" href="/">Ur-Dragon Site</a>
-                <div class="navbar-collapse collapse d-sm-inline-flex">
+                <a class="navbar-brand-custom" asp-area="" asp-controller="Home" asp-action="Index">SSSite</a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item"><a class="nav-link" href="/">Lobby</a></li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navJogos" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle text-light" href="#" id="gameDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Jogos
                             </a>
-                            <ul class="dropdown-menu shadow" aria-labelledby="navJogos">
-                                <li><a class="dropdown-item" asp-controller="Home" asp-action="GalacticDefender">Galactic Defender</a></li>
-
-                                <li><a class="dropdown-item" href="#">Shuffle Cups</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Charts</a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#">Gráfico Anual</a></li>
+                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="gameDropdown">
+                                <li><a class="dropdown-item" asp-controller="Jogos" asp-action="GalaxyDefender">Galaxy Defender</a></li>
+                                <li><a class="dropdown-item" asp-controller="Jogos" asp-action="ShuffleCups">Shuffle Cups</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -52,12 +76,15 @@
         </nav>
     </header>
 
-    <main role="main">
-        @RenderBody()
-    </main>
+    <div class="container-fluid p-0">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    @RenderSection("Scripts", required: false)
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
