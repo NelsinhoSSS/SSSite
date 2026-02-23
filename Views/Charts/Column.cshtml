@@ -1,0 +1,197 @@
+﻿@{
+    ViewData["Title"] = "Editor de Gráfico Colunas - Alpha Beta Gama";
+}
+
+<div class="charts-container">
+    <div class="chart-layout">
+        <div class="controls-box">
+            <h2 class="chart-title">Column Chart</h2>
+            <p class="chart-info">Compare as grandezas das variáveis:</p>
+
+            <div class="input-group-neon">
+                <label>Nível Alpha</label>
+                <input type="number" id="valAlpha" value="50" oninput="updateChart()">
+            </div>
+
+            <div class="input-group-neon">
+                <label>Nível Beta</label>
+                <input type="number" id="valBeta" value="80" oninput="updateChart()">
+            </div>
+
+            <div class="input-group-neon">
+                <label>Nível Gama</label>
+                <input type="number" id="valGama" value="45" oninput="updateChart()">
+            </div>
+
+            <button class="btn-reset" onclick="resetValues()">LIMPAR ESCALA</button>
+        </div>
+
+        <div class="chart-box">
+            <div class="canvas-wrapper">
+                <canvas id="columnChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .charts-container {
+        height: calc(100vh - 56px);
+        background: #0a0a0c;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .chart-layout {
+        display: flex;
+        gap: 30px;
+        background: #15151e;
+        border: 2px solid #3d2b56;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        max-width: 1000px;
+        width: 95%;
+    }
+
+    .controls-box {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .input-group-neon {
+        margin-bottom: 20px;
+    }
+
+        .input-group-neon label {
+            display: block;
+            color: #ccc;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-group-neon input {
+            width: 100%;
+            background: #0a0a0c;
+            border: 1px solid #3d2b56;
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+            .input-group-neon input:focus {
+                border-color: #00d4ff;
+                box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+            }
+
+    .chart-box {
+        flex: 1.5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .canvas-wrapper {
+        width: 100%;
+        height: 400px;
+    }
+
+    .chart-title {
+        color: #00d4ff; /* Mudei para ciano para diferenciar do de pizza */
+        text-shadow: 0 0 10px #00d4ff;
+        margin-bottom: 10px;
+        letter-spacing: 2px;
+    }
+
+    .chart-info {
+        color: #666;
+        font-size: 0.85rem;
+        margin-bottom: 25px;
+    }
+
+    .btn-reset {
+        margin-top: 10px;
+        background: transparent;
+        border: 1px solid #ff0055;
+        color: #ff0055;
+        padding: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.3s;
+        font-weight: bold;
+    }
+
+        .btn-reset:hover {
+            background: #ff0055;
+            color: white;
+        }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const ctx = document.getElementById('columnChart').getContext('2d');
+
+        let columnChart = new Chart(ctx, {
+            type: 'bar', // Tipo barra/coluna
+            data: {
+                labels: ['Alpha', 'Beta', 'Gama'],
+                datasets: [{
+                    label: 'Magnitude',
+                    data: [50, 80, 45],
+                    backgroundColor: [
+                        'rgba(188, 111, 241, 0.6)',
+                        'rgba(0, 212, 255, 0.6)',
+                        'rgba(255, 252, 51, 0.6)'
+                    ],
+                    borderColor: ['#bc6ff1', '#00d4ff', '#fffc33'],
+                    borderWidth: 2,
+                    borderRadius: 5 // Bordas arredondadas nas barras
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#888' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#ccc' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false } // Escondi a legenda pois os nomes já estão no eixo X
+                }
+            }
+        });
+
+        function updateChart() {
+            const v1 = parseFloat(document.getElementById('valAlpha').value) || 0;
+            const v2 = parseFloat(document.getElementById('valBeta').value) || 0;
+            const v3 = parseFloat(document.getElementById('valGama').value) || 0;
+
+            columnChart.data.datasets[0].data = [v1, v2, v3];
+            columnChart.update();
+        }
+
+        function resetValues() {
+            document.getElementById('valAlpha').value = 0;
+            document.getElementById('valBeta').value = 0;
+            document.getElementById('valGama').value = 0;
+            updateChart();
+        }
+    </script>
+}

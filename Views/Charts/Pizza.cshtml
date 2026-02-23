@@ -1,0 +1,194 @@
+﻿@{
+    ViewData["Title"] = "Editor de Gráfico Pizza - Alpha Beta Gama";
+}
+
+<div class="charts-container">
+    <div class="chart-layout">
+        <div class="controls-box">
+            <h2 class="chart-title">Pizza Chart</h2>
+            <p class="chart-info">Ajuste os níveis das variáveis:</p>
+
+            <div class="input-group-neon">
+                <label>Variável Alpha</label>
+                <input type="number" id="valAlpha" value="30" oninput="updateChart()">
+            </div>
+
+            <div class="input-group-neon">
+                <label>Variável Beta</label>
+                <input type="number" id="valBeta" value="30" oninput="updateChart()">
+            </div>
+
+            <div class="input-group-neon">
+                <label>Variável Gama</label>
+                <input type="number" id="valGama" value="30" oninput="updateChart()">
+            </div>
+
+            <button class="btn-reset" onclick="resetValues()">LIMPAR DADOS</button>
+        </div>
+
+        <div class="chart-box">
+            <div class="canvas-wrapper">
+                <canvas id="pizzaChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .charts-container {
+        height: calc(100vh - 56px);
+        background: #0a0a0c;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .chart-layout {
+        display: flex;
+        gap: 30px;
+        background: #15151e;
+        border: 2px solid #3d2b56;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        max-width: 1000px;
+        width: 95%;
+    }
+
+    .controls-box {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .input-group-neon {
+        margin-bottom: 20px;
+    }
+
+        .input-group-neon label {
+            display: block;
+            color: #ccc;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-group-neon input {
+            width: 100%;
+            background: #0a0a0c;
+            border: 1px solid #3d2b56;
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+            .input-group-neon input:focus {
+                border-color: #bc6ff1;
+                box-shadow: 0 0 10px rgba(188, 111, 241, 0.3);
+            }
+
+    .chart-box {
+        flex: 1.5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .canvas-wrapper {
+        width: 100%;
+        height: 400px;
+    }
+
+    .chart-title {
+        color: #bc6ff1;
+        text-shadow: 0 0 10px #bc6ff1;
+        margin-bottom: 10px;
+        letter-spacing: 2px;
+    }
+
+    .chart-info {
+        color: #666;
+        font-size: 0.85rem;
+        margin-bottom: 25px;
+    }
+
+    .btn-reset {
+        margin-top: 10px;
+        background: transparent;
+        border: 1px solid #ff0055;
+        color: #ff0055;
+        padding: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.3s;
+        font-weight: bold;
+    }
+
+        .btn-reset:hover {
+            background: #ff0055;
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.4);
+        }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const ctx = document.getElementById('pizzaChart').getContext('2d');
+
+        let pizzaChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Alpha', 'Beta', 'Gama'],
+                datasets: [{
+                    data: [30, 30, 30],
+                    backgroundColor: [
+                        'rgba(188, 111, 241, 0.7)',
+                        'rgba(0, 212, 255, 0.7)',
+                        'rgba(255, 252, 51, 0.7)'
+                    ],
+                    borderColor: ['#bc6ff1', '#00d4ff', '#fffc33'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#ccc',
+                            font: { size: 14 }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 500 // Animação suave de meio segundo ao atualizar
+                }
+            }
+        });
+
+        function updateChart() {
+            const v1 = parseFloat(document.getElementById('valAlpha').value) || 0;
+            const v2 = parseFloat(document.getElementById('valBeta').value) || 0;
+            const v3 = parseFloat(document.getElementById('valGama').value) || 0;
+
+            pizzaChart.data.datasets[0].data = [v1, v2, v3];
+            pizzaChart.update();
+        }
+
+        function resetValues() {
+            document.getElementById('valAlpha').value = 0;
+            document.getElementById('valBeta').value = 0;
+            document.getElementById('valGama').value = 0;
+            updateChart();
+        }
+    </script>
+}
