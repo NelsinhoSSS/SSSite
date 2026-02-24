@@ -1,0 +1,79 @@
+﻿@{
+    ViewData["Title"] = "Random-inator Números";
+    var resultado = ViewBag.NumeroSorteado;
+}
+
+<div class="main-wrapper d-flex flex-column align-items-center justify-content-start pt-5">
+    <div class="tool-container text-center">
+
+        <div class="number-display-custom">
+            <span id="randomNumber">@resultado</span>
+        </div>
+
+        <form asp-controller="Random" asp-action="Numeros" method="get">
+            <input type="hidden" name="sortear" value="true" />
+            <button type="submit" class="btn-dice">🎲🎲🎲</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .text-green {
+        color: #00ff41;
+        text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        letter-spacing: 2px;
+        font-weight: bold;
+    }
+
+    .description-text {
+        font-size: 2.2rem;
+    }
+
+    .subtitle-text {
+        color: #b0b0b0;
+        font-size: 1.1rem;
+    }
+
+    .number-display-custom {
+        background: #15151e;
+        border: 3px solid #00ff41;
+        /* Ajustado para garantir que o número longo caiba sem quebrar */
+        min-width: 320px;
+        padding: 20px 40px;
+        height: 150px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 30px auto;
+        box-shadow: 0 0 30px rgba(0, 255, 65, 0.2);
+    }
+
+    #randomNumber {
+        font-size: 4.5rem; /* Fonte grande e impactante */
+        font-family: 'Courier New', Courier, monospace;
+        color: #fff;
+        text-shadow: 0 0 15px #00ff41;
+        letter-spacing: -2px; /* Deixa os números mais "juntos" visualmente */
+    }
+
+    .btn-dice {
+        background: transparent;
+        border: 2px solid #00ff41;
+        font-size: 2.5rem;
+        padding: 10px 50px;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: 0.3s ease;
+    }
+
+        .btn-dice:hover {
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 25px #00ff41;
+            transform: scale(1.05);
+        }
+
+    .main-wrapper {
+        padding-top: 80px !important;
+    }
+</style>

@@ -1,0 +1,129 @@
+﻿@{
+    ViewData["Title"] = "Random-inator Animais";
+    var animal = ViewBag.AnimalEscolhido ?? "";
+}
+
+<div class="main-wrapper d-flex flex-column align-items-center justify-content-start pt-5">
+    <div class="search-box-container">
+        <p class="subtitle-text mb-4">
+            Digite um nome de animal (em inglês para melhores resultados) para ver imagens aleatórias e únicas.
+        </p>
+        <p class="subtitle-text mb-2">
+            Ps: 100% de certeza que vai aparecer uma imagem nada haver leve na esportiva e de uma risada 👍
+        </p>
+
+        <form asp-controller="Random" asp-action="Animais" method="get" class="d-flex flex-column align-items-center">
+            <input type="text" name="animalNome" value="@animal" placeholder="Ex: Wolf, Tiger, Cat..." class="input-neon" required>
+            <button type="submit" class="btn-randomize">RANDOMIZAR</button>
+        </form>
+    </div>
+
+    @if (!string.IsNullOrEmpty(animal))
+    {
+        <div class="image-gallery mt-5">
+            @for (int i = 1; i <= 3; i++)
+            {
+                <div class="img-card">
+                    <img src="https://loremflickr.com/400/400/@animal?lock=@(Guid.NewGuid().GetHashCode() + i)"
+                         alt="Imagem de @animal @i"
+                         onerror="this.src='https://placehold.co/400x400?text=Imagem+nao+encontrada'">
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    /* Cores e Texto */
+    .text-green {
+        color: #00ff41; /* Verde neon */
+        text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        letter-spacing: 3px;
+    }
+
+    .description-text {
+        font-size: 2.2rem; 
+        margin-bottom: 5px; 
+    }
+
+    .subtitle-text {
+        color: #b0b0b0; /* Cinza claro para subtítulo */
+        font-size: 1.1rem;
+        max-width: 500px;
+        text-align: center;
+        line-height: 1.5;
+    }
+
+    /* Input e Botão */
+    .input-neon {
+        background: #15151e;
+        border: 2px solid #3d2b56;
+        color: #fff;
+        padding: 15px 25px;
+        border-radius: 50px;
+        width: 350px; 
+        outline: none;
+        transition: 0.3s;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 1.1rem; 
+    }
+
+        .input-neon:focus {
+            border-color: #00ff41; /* Borda verde no foco */
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+
+    .btn-randomize {
+        background: #00ff41; /
+        color: #000; 
+        border: none;
+        padding: 12px 45px; 
+        border-radius: 8px; 
+        font-weight: bold;
+        text-transform: uppercase;
+        transition: 0.3s;
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+        .btn-randomize:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #00ff41; /* Sombra verde */
+        }
+
+    /* Galeria de Imagens */
+    .image-gallery {
+        display: flex;
+        gap: 25px; /* Espaço um pouco maior entre as imagens */
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 4rem !important; /* Mais espaço do botão para as imagens */
+    }
+
+    .img-card {
+        width: 300px;
+        height: 300px;
+        border: 3px solid #00ff41; /* Borda verde */
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        background: #222; /* Fundo para imagens não carregadas */
+    }
+
+        .img-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: 0.5s;
+        }
+
+        .img-card:hover img {
+            transform: scale(1.1);
+        }
+
+    /* Ajuste de posicionamento geral */
+    .main-wrapper {
+        padding-top: 80px !important; /* Subir mais os elementos na página */
+    }
+</style>

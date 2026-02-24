@@ -59,6 +59,7 @@
         <nav class="navbar navbar-expand-sm navbar-dark border-bottom" style="background-color: #0a0a0c; border-color: #3d2b56 !important;">
             <div class="container-fluid">
                 <a class="navbar-brand-custom" asp-controller="Home" asp-action="Index">SSSite</a>
+
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item dropdown">
@@ -68,6 +69,7 @@
                                 <li><a class="dropdown-item" asp-controller="Jogos" asp-action="ShuffleCups">Shuffle Cups</a></li>
                             </ul>
                         </li>
+
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle text-light" href="#" data-bs-toggle="dropdown">Charts</a>
                             <ul class="dropdown-menu dropdown-menu-dark">
@@ -75,7 +77,18 @@
                                 <li><a class="dropdown-item" asp-controller="Charts" asp-action="Column">Column</a></li>
                             </ul>
                         </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle btn-random-inator" href="#" id="randomDropdown" role="button" data-bs-toggle="dropdown">
+                                Random-inator
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" asp-controller="Random" asp-action="Animais">Animais</a></li>
+                                <li><a class="dropdown-item" asp-controller="Random" asp-action="Numeros">Números</a></li>
+                            </ul>
+                        </li>
                     </ul>
+
                     <ul class="navbar-nav">
                         <li class="nav-item">
                             <a id="mysteryBtn" class="nav-link btn-mystery" href="javascript:void(0)" onclick="openSecretModal()">???</a>
