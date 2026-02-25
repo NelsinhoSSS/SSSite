@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Http
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="utf-8" />
@@ -7,14 +8,14 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <style>
-        /* CSS GLOBAL E RESET DE SCROLL */
+        /* CSS GLOBAL */
         html, body {
             height: 100%;
             margin: 0;
             padding: 0;
             background-color: #0a0a0c;
             color: white;
-            overflow: hidden; /* Trava o scroll global */
+            overflow: hidden;
         }
 
         .navbar-brand-custom {
@@ -35,22 +36,41 @@
         /* ESTILO DO BOTÃO MISTERIOSO */
         .btn-mystery {
             font-family: 'Courier New', Courier, monospace;
-            color: #333 !important;
+            color: #333 !important; /* Cor apagada quando normal */
             transition: 0.5s all ease;
             cursor: help;
+            text-decoration: none;
+            font-size: 1.2rem;
+            padding: 0 15px;
         }
 
-            /* CLASSE ADICIONADA PELO adm.js */
+            /* MODO ADM ATIVO: "!!!" VERDES */
             .btn-mystery.adm-active {
-                color: #00ff41 !important;
-                text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
+                color: #00ff41 !important; /* Verde Matrix/Neon */
+                text-shadow: 0 0 8px #00ff41, 0 0 15px #00ff41;
                 font-weight: bold;
-                transform: scale(1.1);
+                transform: scale(1.2);
+                filter: drop-shadow(0 0 5px rgba(0, 255, 65, 0.5));
+            }
+
+            .btn-mystery:hover {
+                color: #666 !important;
+            }
+
+            .btn-mystery.adm-active:hover {
+                color: #fff !important;
+                text-shadow: 0 0 15px #00ff41, 0 0 30px #00ff41;
             }
 
         .dropdown-menu-dark {
             background-color: #15151e;
             border: 1px solid #3d2b56;
+        }
+
+        .modal-content-secret {
+            background-color: #0a0a0c;
+            border: 1px solid #3d2b56;
+            color: #bc6ff1;
         }
     </style>
 </head>
@@ -79,19 +99,35 @@
                         </li>
 
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle btn-random-inator" href="#" id="randomDropdown" role="button" data-bs-toggle="dropdown">
-                                Random-inator
-                            </a>
+                            <a class="nav-link dropdown-toggle text-light" href="#" id="randomDropdown" role="button" data-bs-toggle="dropdown">Random-inator</a>
                             <ul class="dropdown-menu dropdown-menu-dark">
                                 <li><a class="dropdown-item" asp-controller="Random" asp-action="Animais">Animais</a></li>
                                 <li><a class="dropdown-item" asp-controller="Random" asp-action="Numeros">Números</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-light" href="#" id="decklistDropdown" role="button" data-bs-toggle="dropdown">DeckList</a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" asp-controller="MTG" asp-action="MTG">MTG</a></li>
+                                <li><a class="dropdown-item" asp-controller="Deck" asp-action="Yugioh">Yu-Gi-Oh!</a></li>
                             </ul>
                         </li>
                     </ul>
 
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a id="mysteryBtn" class="nav-link btn-mystery" href="javascript:void(0)" onclick="openSecretModal()">???</a>
+                            @{
+                                // Verificação da sessão para o Modo ADM
+                                bool eAdmin = Context.Session.GetString("ModoAdm") == "Ativo";
+                            }
+                            <a id="mysteryBtn"
+                               class="nav-link btn-mystery @(eAdmin ? "adm-active" : "")"
+                               href="javascript:void(0)"
+                               data-bs-toggle="modal"
+                               data-bs-target="#secretModal">
+                                @(eAdmin ? "!!!" : "???")
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -105,14 +141,24 @@
         </main>
     </div>
 
-    <partial name="AdmMode" />
+    @* MODAL DE SENHA DIRETO NO LAYOUT *@
+    <div class="modal fade" id="secretModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content modal-content-secret shadow-lg">
+                <div class="modal-body p-4">
+                    <form action="/Adm/Validar" method="post">
+                        <label class="form-label small fw-bold">Password Required</label>
+                        <input type="password" name="senha" class="form-control form-control-sm bg-transparent text-info border-secondary mb-3 shadow-none text-center" autofocus autocomplete="off">
+                        <button type="submit" class="btn btn-sm btn-outline-info w-100" style="font-size: 0.7rem;">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
-    <script src="~/js/adm.js" asp-append-version="true"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
