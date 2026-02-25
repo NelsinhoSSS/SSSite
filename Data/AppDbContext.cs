@@ -10,5 +10,8 @@ namespace SSSite.Data
         // Se estas duas linhas não estiverem aqui, o comando não cria as tabelas!
         public DbSet<Deck> Decks { get; set; }
         public DbSet<Carta> Cartas { get; set; }
+
+        public DbSet<YugiohDeck> YugiohDecks { get; set; }
+        public DbSet<YugiohCarta> YugiohCartas { get; set; }
     }
 }

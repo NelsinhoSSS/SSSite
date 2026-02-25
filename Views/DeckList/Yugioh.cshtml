@@ -1,0 +1,227 @@
+﻿@using Microsoft.AspNetCore.Http
+@using SSSite.Models
+@model List<YugiohDeck>
+
+@{
+    ViewData["Title"] = "YGO VAULT";
+    bool eAdmin = Context.Session.GetString("ModoAdm") == "Ativo";
+}
+
+<style>
+    body {
+        background-color: #0b0b0b;
+        color: #fff;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* Título Dourado Yu-Gi-Oh */
+    .text-ygo {
+        color: #ffcc00;
+        text-shadow: 0 0 10px rgba(255, 204, 0, 0.4);
+    }
+
+    /* BOTÃO ADM !!! VERDE !!! */
+    .btn-adm-v {
+        background: transparent;
+        border: 2px solid #00ff41;
+        color: #00ff41;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+        .btn-adm-v:hover {
+            background: #00ff41;
+            color: #000;
+            box-shadow: 0 0 15px #00ff41;
+        }
+
+    /* Estrutura do Deck */
+    .deck-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 5px 15px;
+        margin-bottom: 8px;
+    }
+
+    .accordion-button {
+        background: transparent !important;
+        color: #ffcc00 !important;
+        border: none !important;
+        box-shadow: none !important;
+        flex-grow: 1;
+        text-align: left;
+    }
+
+    /* Lista de Cartas com Scroll */
+    .card-list-scroll {
+        background: #0d0d0d;
+        border: 1px solid #333;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    /* ITEM DA CARTA - CORES CORRIGIDAS */
+    .item-carta-ygo {
+        padding: 8px 25px;
+        border-bottom: 1px solid #222;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Quantidade em Dourado */
+    .qtd-ygo {
+        color: #ffcc00 !important;
+        font-weight: bold;
+        min-width: 45px;
+        display: inline-block;
+    }
+
+    /* Nome da Carta em Branco Puro */
+    .nome-carta-ygo {
+        color: #ffffff !important;
+        font-size: 0.95rem;
+    }
+
+    /* Scrollbar Personalizada Dourada */
+    .card-list-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .card-list-scroll::-webkit-scrollbar-thumb {
+        background: #ffcc00;
+        border-radius: 10px;
+    }
+
+    /* Botões de Ação */
+    .btn-action {
+        font-size: 0.7rem;
+        padding: 2px 10px;
+        margin-left: 5px;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+
+    .btn-edit {
+        border: 1px solid #ffca2c;
+        color: #ffca2c;
+        background: transparent;
+    }
+
+        .btn-edit:hover {
+            background: #ffca2c;
+            color: #000;
+        }
+
+    .btn-delete {
+        border: 1px solid #ff4d4d;
+        color: #ff4d4d;
+        background: transparent;
+    }
+
+        .btn-delete:hover {
+            background: #ff4d4d;
+            color: #fff;
+        }
+</style>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5 border-bottom border-secondary pb-3">
+        <h1 class="text-ygo fw-bold m-0">YUGIOH VAULT</h1>
+        @if (eAdmin)
+        {
+            <button class="btn btn-adm-v px-4" onclick="abrirModalCriar()">!!! NOVO DECK !!!</button>
+        }
+    </div>
+
+    <div class="accordion" id="ygoAccordion">
+        @foreach (var deck in Model)
+        {
+            var totalCards = deck.Cartas.Sum(c => int.Parse(c.Quantidade));
+            <div class="accordion-item bg-transparent border-0 mb-3">
+                <div class="deck-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#deck-@deck.Id">
+                        🃏 @deck.Nome.ToUpper()
+                    </button>
+
+                    <div class="d-flex align-items-center">
+                        <span class="badge border border-warning text-warning me-3">@totalCards CARDS</span>
+
+                        @if (eAdmin)
+                        {
+                            <button class="btn btn-action btn-edit" onclick="abrirModalEditar(@deck.Id)">EDITAR</button>
+                            <form asp-action="ExcluirDeck" method="post" onsubmit="return confirm('Deseja banir este deck?');" style="display:inline;">
+                                <input type="hidden" name="id" value="@deck.Id" />
+                                <button type="submit" class="btn btn-action btn-delete">EXCLUIR</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+
+                <div id="deck-@deck.Id" class="accordion-collapse collapse" data-bs-parent="#ygoAccordion">
+                    <div class="card-list-scroll">
+                        @foreach (var carta in deck.Cartas.OrderBy(c => c.Nome))
+                        {
+                            <div class="item-carta-ygo">
+                                <span class="qtd-ygo">@carta.Quantidade x</span>
+                                <span class="nome-carta-ygo">@carta.Nome</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (eAdmin)
+{
+    <div class="modal fade" id="modalYgo" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border-warning shadow-lg">
+                <form asp-action="SalvarDeck" method="post" class="modal-body p-4">
+                    <input type="hidden" name="id" id="deckIdField">
+                    <h5 class="text-ygo mb-4 fw-bold" id="modalTitulo">NOVO DECK</h5>
+
+                    <input type="text" name="nome" id="nomeDeckInput" class="form-control bg-black text-white border-secondary mb-3 shadow-none" placeholder="Nome do Deck" required>
+                    <textarea name="cartasRaw" id="cartasRawInput" class="form-control bg-black text-white border-secondary mb-3 shadow-none" rows="10" placeholder="3 Blue-Eyes White Dragon"></textarea>
+
+                    <button type="submit" class="btn btn-adm-v w-100">!!! SALVAR NO COFRE !!!</button>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<script>
+    let meuModal = null;
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalEl = document.getElementById('modalYgo');
+        if(modalEl) meuModal = new bootstrap.Modal(modalEl);
+    });
+
+    function abrirModalCriar() {
+        document.getElementById('deckIdField').value = "";
+        document.getElementById('nomeDeckInput').value = "";
+        document.getElementById('cartasRawInput').value = "";
+        document.getElementById('modalTitulo').innerText = "NOVO DECK";
+        meuModal.show();
+    }
+
+    async function abrirModalEditar(id) {
+        const resp = await fetch(`/Yugioh/ObterDadosEdicao?id=${id}`);
+        if(resp.ok) {
+            const data = await resp.json();
+            document.getElementById('deckIdField').value = data.id;
+            document.getElementById('nomeDeckInput').value = data.nome;
+            document.getElementById('cartasRawInput').value = data.cartas;
+            document.getElementById('modalTitulo').innerText = "EDITAR DECK";
+            meuModal.show();
+        }
+    }
+</script>
