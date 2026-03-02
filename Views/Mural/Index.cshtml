@@ -1,0 +1,135 @@
+﻿@using Microsoft.AspNetCore.Http
+@model List<SSSite.Models.MuralMensagem>
+@{
+    ViewData["Title"] = "MURAL";
+}
+
+<style>
+    /* Define o fundo da tela com a imagem selecionada */
+    .mural-background {
+        background-image: url('/img/QuadroPinos.jpg');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        min-height: 100vh;
+        width: 100%;
+        padding-top: 100px; /* Espaço superior para o botão não cobrir conteúdo */
+    }
+
+    /* Botão verde posicionado no topo esquerdo da tela */
+    .btn-criar-msg {
+        position: absolute;
+        top: 25px;
+        left: 25px;
+        z-index: 1000;
+        background-color: #00ff41 !important;
+        color: #000 !important;
+        border: 2px solid #00ff41 !important;
+        box-shadow: 0 0 15px #00ff41;
+        font-weight: bold;
+        padding: 10px 20px;
+        text-transform: uppercase;
+        border-radius: 5px;
+    }
+
+    /* Organiza os cards automaticamente usando CSS Grid */
+    .mural-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 30px;
+        padding: 20px;
+        align-items: start; /* Faz com que cada card tenha sua própria altura sem se esticar ao maior */
+    }
+
+    /*  Estilo do post */
+    .card-postit {
+        background: rgba(20, 20, 20, 0.95);
+        padding: 30px 20px 15px 20px;
+        border-left: 8px solid; /* A cor é definida dinamicamente no HTML */
+        position: relative;
+        min-height: 120px;
+        height: auto; /* Permite que o card cresça verticalmente com o texto */
+        display: flex;
+        flex-direction: column;
+        transform: rotate(-1.5deg); /* Inclinação leve para parecer natural */
+        box-shadow: 5px 10px 20px rgba(0,0,0,0.6);
+        word-wrap: break-word; /* Garante que textos longos quebrem linha */
+    }
+
+    /* Botão para excluir */
+    .btn-delete-x {
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        background: transparent;
+        border: none;
+        color: #ff4d4d;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    /* Tachina */
+    .card-postit::after {
+        content: "";
+        position: absolute;
+        top: -7px;
+        left: 50%;
+        width: 14px;
+        height: 14px;
+        background: #ff4d4d;
+        border-radius: 50%;
+    }
+</style>
+
+<div class="mural-background">
+    <button type="button" class="btn-criar-msg" data-bs-toggle="modal" data-bs-target="#modalMural">
+        criar mensagem
+    </button>
+
+    <div class="container-fluid">
+        <div class="mural-grid">
+            @foreach (var msg in Model)
+            {
+                <div class="card-postit" style="border-left-color: @msg.CorNeon;">
+
+                    <form asp-action="Excluir" method="post">
+                        <input type="hidden" name="id" value="@msg.Id" />
+                        <button type="submit" class="btn-delete-x" onclick="return confirm('Excluir?')">&times;</button>
+                    </form>
+
+                    <p class="text-white mb-3" style="font-style: italic; flex-grow: 1;">
+                        "@msg.Conteudo"
+                    </p>
+
+                    <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2">
+                        <span style="color: @msg.CorNeon; font-weight: bold;">— @msg.Autor</span>
+                        <small class="text-muted" style="font-size: 0.6rem;">@msg.Data.ToString("HH:mm")</small>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalMural" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark border-success shadow-lg">
+            <form asp-action="Postar" method="post">
+                <div class="modal-body p-4">
+                    <h5 class="text-success mb-4 fw-bold">NOVO RECADO (Max 200 caracteres)</h5>
+                    <div class="mb-3">
+                        <label class="text-white-50 small mb-1">Sua Mensagem</label>
+                        <textarea name="conteudo" class="form-control bg-black text-white border-secondary"
+                                  rows="5" required maxlength="200"
+                                  placeholder="Escreva sua mensagem aqui..."></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-white-50 small mb-1">Quem assina?</label>
+                        <input type="text" name="autor" class="form-control bg-black text-white border-secondary" maxlength="30">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 fw-bold">FIXAR NO QUADRO</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
