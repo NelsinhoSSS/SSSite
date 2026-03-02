@@ -9,6 +9,7 @@ namespace SSSite.Controllers
 {
     public class MTGController : Controller
     {
+        // Contexto do banco de dados para operações CRUD
         private readonly AppDbContext _context;
 
         public MTGController(AppDbContext context)
@@ -18,7 +19,8 @@ namespace SSSite.Controllers
 
         public IActionResult MTG()
         {
-            // Carrega os decks do banco incluindo as listas de cartas
+            // --- LÓGICA DE LEITURA ---
+            // Inclui a lista de 'Cartas' em cada 'Deck' para carregar tudo de uma vez
             var decks = _context.Decks.Include(d => d.Cartas).ToList();
             return View("~/Views/DeckList/MTG.cshtml", decks);
         }
@@ -26,13 +28,15 @@ namespace SSSite.Controllers
         [HttpPost]
         public IActionResult SalvarDeck(int? id, string nome, string cartasRaw)
         {
+            // Validação básica: não salva se faltar nome ou conteúdo
             if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(cartasRaw))
                 return RedirectToAction("MTG");
 
-            // --- LÓGICA DE SOMAR DUPLICADAS ---
-            // Usamos um dicionário: a Chave é o Nome da Carta e o Valor é a Quantidade
+            // --- LÓGICA DE SOMAR DUPLICADAS (PARSING) ---
+            // Usamos um dicionário: a Chave é o Nome da Carta e o Valor é a Quantidade acumulada
             var contador = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
+            // Divide o texto cru por linhas
             var linhas = cartasRaw.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var linha in linhas)
             {
@@ -43,36 +47,37 @@ namespace SSSite.Controllers
                 {
                     string nomeCarta = partes[1].Trim();
 
+                    // Agrupa as cartas pelo nome, somando as quantidades
                     if (contador.ContainsKey(nomeCarta))
-                        contador[nomeCarta] += qtd; // Se já existe, soma a quantidade
+                        contador[nomeCarta] += qtd;
                     else
-                        contador[nomeCarta] = qtd; // Se é nova, adiciona ao dicionário
+                        contador[nomeCarta] = qtd;
                 }
             }
 
-            // Transformamos o dicionário de volta em objetos do tipo "Carta"
+            // Transformamos o dicionário de volta em objetos do tipo "Carta" para o banco
             var listaDeCartasProcessada = contador.Select(x => new Carta
             {
                 Nome = x.Key,
-                Quantidade = x.Value.ToString()
+                Quantidade = x.Value.ToString() // O modelo espera string para quantidade
             }).OrderBy(x => x.Nome).ToList();
 
 
-            // --- SALVAR NO BANCO DE DADOS ---
+            // --- SALVAR NO BANCO DE DADOS (CRIAÇÃO OU EDIÇÃO) ---
             if (id.HasValue && id > 0)
             {
-                // MODO EDIÇÃO: Busca o deck e suas cartas atuais
+                // MODO EDIÇÃO: Busca o deck e suas cartas atuais no banco
                 var deckExistente = _context.Decks.Include(d => d.Cartas)
-                                            .FirstOrDefault(d => d.Id == id);
+                                                .FirstOrDefault(d => d.Id == id);
 
                 if (deckExistente != null)
                 {
                     deckExistente.Nome = nome.Trim();
 
-                    // 1. Remove as cartas antigas vinculadas a este deck
+                    // EF Core: Remove as cartas antigas relacionadas ao deck
                     _context.Cartas.RemoveRange(deckExistente.Cartas);
 
-                    // 2. Adiciona a nova lista processada (com somas e sem duplicatas)
+                    // EF Core: Adiciona a nova lista processada (com somas atualizadas)
                     deckExistente.Cartas = listaDeCartasProcessada;
 
                     _context.Update(deckExistente);
@@ -80,7 +85,7 @@ namespace SSSite.Controllers
             }
             else
             {
-                // MODO CRIAÇÃO: Cria um novo objeto Deck
+                // MODO CRIAÇÃO: Cria um novo objeto Deck e vincula as cartas
                 var novoDeck = new Deck
                 {
                     Nome = nome.Trim(),
@@ -89,7 +94,8 @@ namespace SSSite.Controllers
                 _context.Decks.Add(novoDeck);
             }
 
-            // Salva todas as alterações no arquivo .db
+            // --- EFETIVAÇÃO ---
+            // Salva todas as alterações (inserções/remoções) no arquivo .db
             _context.SaveChanges();
 
             return RedirectToAction("MTG");
@@ -98,10 +104,12 @@ namespace SSSite.Controllers
         [HttpPost]
         public IActionResult ExcluirDeck(int id)
         {
+            // Busca o deck e o remove do rastreamento do EF
             var deck = _context.Decks.FirstOrDefault(d => d.Id == id);
             if (deck != null)
             {
                 _context.Decks.Remove(deck);
+                // Salva a exclusão no banco
                 _context.SaveChanges();
             }
             return RedirectToAction("MTG");
@@ -110,11 +118,14 @@ namespace SSSite.Controllers
         [HttpGet]
         public IActionResult ObterDadosEdicao(int id)
         {
+            // Busca os dados do deck para preencher o formulário de edição
             var deck = _context.Decks.Include(d => d.Cartas).FirstOrDefault(d => d.Id == id);
             if (deck == null) return NotFound();
 
+            // Reconverte a lista de objetos Carta para o formato de texto cru (Quantidade Nome)
             var cartasTexto = string.Join("\n", deck.Cartas.Select(c => $"{c.Quantidade} {c.Nome}"));
 
+            // Retorna um JSON para o frontend processar
             return Json(new { id = deck.Id, nome = deck.Nome, cartas = cartasTexto });
         }
     }
