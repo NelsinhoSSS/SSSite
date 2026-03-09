@@ -1,0 +1,446 @@
+﻿@using SSSite.Models
+@{
+    Layout = "_Layout";
+    // Ponto de estudo: O C# prepara os dados do servidor antes do JS carregar.
+    var classes = PersonagemArena.ObterClasses();
+    var campanha = InimigoArena.CriarCampanha();
+}
+
+<style>
+    .arena-master {
+        height: 90vh;
+        background: #020202;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-family: 'Segoe UI', sans-serif;
+        /* Overflow hidden impede que o 'shake' da tela crie barras de rolagem */
+        overflow: hidden;
+        position: relative;
+    }
+
+    canvas {
+        background: #000;
+        border: 4px solid #1a1a1a;
+        border-radius: 4px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    }
+
+    #selection-screen {
+        text-align: center;
+        z-index: 10;
+    }
+
+    /* Estilização das cartas de personagens usando hover para feedback visual */
+    .card-selecao {
+        width: 160px;
+        transition: 0.4s;
+        cursor: pointer;
+        background: #111;
+        border: 1px solid #333;
+        padding: 25px 10px;
+        border-radius: 15px;
+    }
+
+        .card-selecao:hover {
+            transform: scale(1.05);
+            border-color: #00ff00;
+            background: #151515;
+        }
+
+    #game-ui {
+        display: none;
+        text-align: center;
+        position: relative;
+        width: 800px;
+    }
+
+    .skill-box {
+        font-weight: bold;
+        padding: 8px;
+        border: 1px solid #444;
+        border-radius: 4px;
+        min-width: 80px;
+        background: rgba(0,0,0,0.8);
+        font-size: 0.8rem;
+    }
+
+    /* Tela de Game Over / Vitória com alta prioridade (z-index) */
+    #end-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        border-radius: 8px;
+    }
+
+    .btn-retry {
+        background: transparent;
+        border: 2px solid #fff;
+        color: #fff;
+        padding: 10px 30px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 20px;
+        transition: 0.3s;
+    }
+</style>
+
+<div class="arena-master">
+    <div id="end-screen">
+        <h1 id="end-title" style="font-size: 4rem;"></h1>
+        <p id="end-subtitle" class="text-secondary"></p>
+        <button class="btn-retry" onclick="location.reload()">RESTART</button>
+    </div>
+
+    <div id="selection-screen">
+        <h1 class="mb-5">Selecione sua Classe</h1>
+        <div class="d-flex gap-3 justify-content-center">
+            @foreach (var c in classes)
+            {
+                @* Injeção direta de variáveis C# no parâmetro da função JS *@
+                <div class="card-selecao" onclick="setupGame('@c.Nome', '@c.Cor', @c.Vida, @c.Velocidade.ToString().Replace(',', '.'), @c.DanoZ, @c.CooldownZ.ToString().Replace(',', '.'), @c.CooldownX.ToString().Replace(',', '.'))">
+                    <div style="font-size: 50px; filter: drop-shadow(0 0 10px @c.Cor)">@c.Icone</div>
+                    <h2 style="color:@c.Cor">@c.Nome</h2>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div id="game-ui">
+        <div id="victory-overlay" style="position:absolute; top:45%; width:100%; font-size:5rem; color:#00ff00; display:none; font-weight:bold; z-index:10; text-shadow: 0 0 25px #00ff00;">STAGE CLEAR</div>
+        <div class="d-flex justify-content-between mb-2 align-items-end">
+            <div class="text-start">
+                <div id="ui-contador" style="color:#555; font-size: 0.9rem;"></div>
+                <div id="ui-stage-name" style="font-size: 1.4rem; font-weight: bold; color: #eee;"></div>
+            </div>
+            <div style="font-size: 1.8rem; font-weight: bold;">HP: <span id="ui-hp" class="text-danger"></span></div>
+            <div class="d-flex gap-2">
+                <div id="ui-z" class="skill-box" style="color:#00ff00">[Z]</div>
+                <div id="ui-x" class="skill-box" style="color:#00ff00">[X]</div>
+            </div>
+        </div>
+        <canvas id="arenaCanvas" width="800" height="450"></canvas>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const canvas = document.getElementById('arenaCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- SISTEMA DE IMAGENS ---
+        const sprites = {
+            fireball: new Image(), dagger: new Image(), arrow: new Image(),
+            sword: new Image(), shield: new Image()
+        };
+        // Carregamento de recursos visuais
+        sprites.fireball.src = "/img/arena/fireball.png";
+        sprites.dagger.src = "/img/arena/dagger.png";
+        sprites.arrow.src = "/img/arena/arrow.png";
+        sprites.sword.src = "/img/arena/sword.png";
+        sprites.shield.src = "/img/arena/shield.png";
+
+        // Variáveis globais de controle de estado
+        let player, active = false, enemies = [], projectiles = [], enemyProjectiles = [], particles = [], blackHoles = [];
+        let currentLevelIndex = 0, isTransitioning = false, shake = 0, shakeStr = 0;
+        const keys = {};
+
+        // Injeção da campanha C# para o Array JavaScript
+        const enemyQueue = [
+            @foreach (var b in campanha)
+            {
+                        @:{
+                        @:  nome: "@b.Nome", r: @b.Raio, hpMax: @b.VidaMax, color: "@b.Cor", ia: "@b.IATipo", forma: "@b.Forma",
+                        @:  multiplo: @b.Multiplo.ToString().ToLower(), qtd: @b.Quantidade, danoContato: @b.DanoContato.ToString().Replace(",", "."),
+                        @:  velocidade: @b.Velocidade.ToString().Replace(",", "."),
+                        @:  temEspadas: @b.TemEspadas.ToString().ToLower(), qtdEspadas: @b.QtdEspadas, raioOrbita: @b.RaioOrbita, velRotacao: @b.VelRotacao.ToString().Replace(",", "."),
+                        @:  disparaRaios: @b.DisparaRaios.ToString().ToLower(), intervaloTiro: @((b.IntervaloTiroSeg * 1000).ToString().Replace(",", ".")), danoRaio: @b.DanoRaio, velRaio: @b.VelRaio.ToString().Replace(",", "."),
+                        @:  tempoDash: @((b.TempoDashSeg * 1000).ToString().Replace(",", ".")), tempoBlackHole: @((b.TempoBlackHoleSeg * 1000).ToString().Replace(",", "."))
+                        @:},
+            }
+        ];
+
+        // Função para ativar o efeito de tremor na tela
+        function triggerShake(s, i) { shake = s; shakeStr = i; }
+
+        // Gerenciador visual de cooldowns no HUD
+        function startCooldownUI(id, k, ms) {
+            const el = document.getElementById(id); let rem = ms / 1000; el.style.color = "#f44";
+            const i = setInterval(() => { rem -= 0.1; if (rem <= 0) { clearInterval(i); el.innerText = `[${k}]`; el.style.color = "#00ff00"; } else el.innerText = Math.max(0, rem).toFixed(1) + "s"; }, 100);
+        }
+
+        // Inicialização das propriedades do jogador escolhido
+        function setupGame(nome, cor, hp, vel, dZ, cdZ_sec, cdX_sec) {
+            document.getElementById('selection-screen').classList.add('d-none');
+            document.getElementById('game-ui').style.display = 'block';
+            // Conversão de segundos para milissegundos para uso com Date.now()
+            player = { nome, cor, hp, hpMax: hp, baseSpeed: vel, speed: vel, dZ, cdZ: cdZ_sec * 1000, cdX: cdX_sec * 1000, x: 100, y: 225, r: 15, readyZ: true, readyX: true, invul: false, dirX: 1, dirY: 0, showCone: false, isDashing: false, isFrenzy: false };
+            spawnLevel(); active = true; loop();
+        }
+
+        // Sistema de Spawn: Limpa o campo e carrega o próximo inimigo da fila
+        function spawnLevel() {
+            if (currentLevelIndex >= enemyQueue.length) { showEndScreen("MISSION COMPLETE", "God of Arena.", "#00ff00"); return; }
+            const data = enemyQueue[currentLevelIndex]; enemies = []; enemyProjectiles = []; particles = []; blackHoles = [];
+            for(let i=0; i < data.qtd; i++) {
+                enemies.push({
+                    ...data, x: 700, y: 150 + (i * 100), hp: data.hpMax,
+                    dx: data.ia === "BOUNCE" ? -data.velocidade : 0,
+                    dy: data.ia === "BOUNCE" ? data.velocidade : 0,
+                    lastDashTime: Date.now(), lastBlackHole: Date.now(), lastShot: Date.now(), isDashing: false
+                });
+            }
+            document.getElementById('ui-contador').innerText = "PHASE " + (currentLevelIndex + 1);
+            document.getElementById('ui-stage-name').innerText = data.nome; isTransitioning = false;
+        }
+
+        // Lógica de Ataque (Tecla Z) - Diferenciada por classe
+        function castZ() {
+            if (!player.readyZ || isTransitioning || !active) return;
+            player.readyZ = false; startCooldownUI('ui-z', 'Z', player.cdZ);
+            if (player.nome === "Guerreiro") {
+                player.showCone = true; triggerShake(10, 6);
+                const pA = Math.atan2(player.dirY, player.dirX);
+                enemies.forEach(en => {
+                    const d = Math.hypot(en.x - player.x, en.y - player.y);
+                    const aE = Math.atan2(en.y - player.y, en.x - player.x);
+                    let diff = aE - pA; while (diff < -Math.PI) diff += Math.PI * 2; while (diff > Math.PI) diff -= Math.PI * 2;
+                    if (d < 170 + en.r && Math.abs(diff) < Math.PI/4) en.hp -= player.dZ;
+                });
+                setTimeout(() => player.showCone = false, 200);
+            } else if (player.nome === "Assassino") {
+                const b = Math.atan2(player.dirY, player.dirX);
+                [b-0.25, b, b+0.25].forEach(ang => projectiles.push({ x: player.x, y: player.y, dx: Math.cos(ang)*12, dy: Math.sin(ang)*12, r: 15, color: "#e74c3c", range: 300, type: 'DAGGER' }));
+            } else if (player.nome === "Mago") {
+                projectiles.push({ x: player.x, y: player.y, dx: player.dirX*6, dy: player.dirY*6, r: 30, color: "#ff4500", isFireball: true, type: 'FIREBALL' });
+            } else {
+                projectiles.push({ x: player.x, y: player.y, dx: player.dirX*14, dy: player.dirY*14, r: 12, color: "#0ff", type: 'ARROW' });
+            }
+            setTimeout(() => player.readyZ = true, player.cdZ);
+        }
+
+        // Lógica de Especial (Tecla X) - Diferenciada por classe
+        function castX() {
+            if (!player.readyX || isTransitioning || !active) return;
+            player.readyX = false; startCooldownUI('ui-x', 'X', player.cdX);
+            if (player.nome === "Assassino") { player.isFrenzy = true; player.speed = player.baseSpeed * 2; setTimeout(() => { player.isFrenzy = false; player.speed = player.baseSpeed; }, 2500); }
+            else if (player.nome === "Guerreiro") { player.invul = true; triggerShake(5, 2); setTimeout(() => player.invul = false, 600); }
+            else if (player.nome === "Arqueiro") { player.isDashing = true; player.invul = true; player.speed = player.baseSpeed * 3.5; setTimeout(() => { player.isDashing = false; player.invul = false; player.speed = player.baseSpeed; }, 200); }
+            else if (player.nome === "Mago") { player.x += player.dirX * 200; player.y += player.dirY * 200; player.invul = true; setTimeout(() => player.invul = false, 300); }
+            setTimeout(() => player.readyX = true, player.cdX);
+        }
+
+        // Loop principal de atualização (Física e Lógica)
+        function update() {
+            if (!active || isTransitioning) return;
+
+            // Captura de movimento (Setas)
+            let mx = 0, my = 0; if (keys['ArrowUp']) my = -1; if (keys['ArrowDown']) my = 1; if (keys['ArrowLeft']) mx = -1; if (keys['ArrowRight']) mx = 1;
+
+            if (player.isDashing) { player.x += player.dirX * player.speed; player.y += player.dirY * player.speed; }
+            else if (mx || my) { player.x += mx * player.speed; player.y += my * player.speed; player.dirX = mx; player.dirY = my; }
+
+            // Colisão com bordas do canvas
+            player.x = Math.max(player.r, Math.min(canvas.width - player.r, player.x));
+            player.y = Math.max(player.r, Math.min(canvas.height - player.r, player.y));
+
+            // Lógica do Buraco Negro (Atração gravitacional)
+            blackHoles.forEach((bh, i) => {
+                let d = Math.hypot(bh.x - player.x, bh.y - player.y); if (bh.r < bh.maxR) bh.r += 2;
+                if (d < bh.maxR + 150) { let force = (1 - d / (bh.maxR + 150)) * 5; let ang = Math.atan2(bh.y - player.y, bh.x - player.x); player.x += Math.cos(ang) * force; player.y += Math.sin(ang) * force; }
+                if (d < bh.r * 0.35 && !player.invul) { player.hp = 0; showEndScreen("SPAGHETTIFIED", "Singularity.", "#6200ea"); }
+                if (Date.now() - bh.start > bh.life) blackHoles.splice(i, 1);
+            });
+
+            particles.forEach((p, i) => { p.x += p.dx; p.y += p.dy; p.life -= 0.02; if (p.life <= 0) particles.splice(i, 1); });
+
+            // IA dos Inimigos
+            enemies.forEach((en, idx) => {
+                let a = Math.atan2(player.y - en.y, player.x - en.x);
+
+                if (en.ia === "FINAL_BOSS") {
+                    en.x += (400 - en.x) * 0.01; en.y += (225 - en.y) * 0.01;
+                    if (Date.now() - en.lastBlackHole > en.tempoBlackHole) {
+                        blackHoles.push({ x: player.x, y: player.y, r: 0, maxR: 120, life: 5000, start: Date.now() });
+                        en.lastBlackHole = Date.now(); triggerShake(15, 10);
+                    }
+                }
+                else if (en.ia === "DASH") {
+                    if (!en.isDashing) {
+                        en.x += Math.cos(Date.now()/1000)*1.5; en.y += Math.sin(Date.now()/1000)*1.5;
+                        if (Date.now() - en.lastDashTime > en.tempoDash) { en.isDashing = true; en.dashStart = Date.now(); en.dashDX = Math.cos(a)*22; en.dashDY = Math.sin(a)*22; triggerShake(8, 5); }
+                    } else {
+                        en.x += en.dashDX; en.y += en.dashDY;
+                        if (Date.now() - en.dashStart > 450) { en.isDashing = false; en.lastDashTime = Date.now(); }
+                    }
+                }
+                else if(en.ia === "TRACKER") {
+                    en.x += Math.cos(a) * en.velocidade; en.y += Math.sin(a) * en.velocidade;
+                }
+                else if(en.ia === "BOUNCE") {
+                    en.x += en.dx; en.y += en.dy;
+                }
+
+                // Rebote nas bordas (IA Bounce)
+                if (en.x < en.r) { en.x = en.r; en.dx = Math.abs(en.dx || en.velocidade); }
+                else if (en.x > canvas.width - en.r) { en.x = canvas.width - en.r; en.dx = -Math.abs(en.dx || en.velocidade); }
+                if (en.y < en.r) { en.y = en.r; en.dy = Math.abs(en.dy || en.velocidade); }
+                else if (en.y > canvas.height - en.r) { en.y = canvas.height - en.r; en.dy = -Math.abs(en.dy || en.velocidade); }
+
+                // Disparo de projéteis do inimigo
+                if (en.disparaRaios && Date.now() - en.lastShot > en.intervaloTiro) {
+                    let shootAng = (en.ia === "FINAL_BOSS") ? Math.random()*Math.PI*2 : a;
+                    enemyProjectiles.push({ x: en.x, y: en.y, dx: Math.cos(shootAng)*en.velRaio, dy: Math.sin(shootAng)*en.velRaio, r: 8 });
+                    en.lastShot = Date.now();
+                }
+
+                // Dano por contato (Baseado em frames/tempo)
+                if (!player.invul && Math.hypot(player.x-en.x, player.y-en.y) < player.r+en.r) { player.hp -= en.danoContato / 60; }
+
+                // Morte do inimigo e efeito de partículas
+                if (en.hp <= 0) {
+                    for(let i=0; i<30; i++) particles.push({ x: en.x, y: en.y, dx: (Math.random()-0.5)*10, dy: (Math.random()-0.5)*10, life: 1, color: en.color, r: Math.random()*5+2 });
+                    if (en.multiplo && en.r > 20) {
+                        for(let i=0; i<2; i++) enemies.push({...en, r: en.r/2, hp: en.hpMax/2.5, hpMax: en.hpMax/2.5, multiplo: (en.r/2 > 20), dx: (Math.random()-0.5)*8, dy: (Math.random()-0.5)*8});
+                    }
+                    enemies.splice(idx, 1);
+                }
+            });
+
+            // Atualização de projéteis do jogador e detecção de acerto
+            projectiles.forEach((p, i) => {
+                p.x += p.dx; p.y += p.dy;
+                if (p.range !== undefined) { p.range -= Math.hypot(p.dx, p.dy); if (p.range <= 0) { projectiles.splice(i, 1); return; } }
+                if(p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) { projectiles.splice(i, 1); return; }
+                enemies.forEach(en => { if (Math.hypot(p.x-en.x, p.y-en.y) < en.r+p.r) { en.hp -= player.dZ; if (!p.isFireball) projectiles.splice(i, 1); }});
+            });
+
+            // Atualização de projéteis dos inimigos
+            enemyProjectiles.forEach((p, i) => {
+                p.x += p.dx; p.y += p.dy;
+                if(p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) { enemyProjectiles.splice(i, 1); return; }
+                if (!player.invul && Math.hypot(player.x-p.x, player.y-p.y) < player.r+p.r) { player.hp -= 15; enemyProjectiles.splice(i, 1); triggerShake(8, 4); }
+            });
+
+            // Transição de fase
+            if (enemies.length === 0 && !isTransitioning) {
+                isTransitioning = true; document.getElementById('victory-overlay').style.display = 'block';
+                player.hp = Math.min(player.hpMax, player.hp + player.hpMax*0.25);
+                setTimeout(() => { document.getElementById('victory-overlay').style.display = 'none'; currentLevelIndex++; spawnLevel(); }, 1500);
+            }
+            document.getElementById('ui-hp').innerText = Math.max(0, Math.floor(player.hp));
+            if(player.hp <= 0) showEndScreen("TERMINATED", "Signal Lost.", "#f00");
+        }
+
+        // Renderização gráfica
+        function draw() {
+            ctx.clearRect(0,0,canvas.width,canvas.height); ctx.save();
+            if (shake > 0) { ctx.translate((Math.random()-0.5)*shakeStr, (Math.random()-0.5)*shakeStr); shake--; }
+
+            // Barra de HP do Boss/Fase (Topo)
+            if (enemies.length > 0) {
+                let totalHp = 0, totalMax = 0; enemies.forEach(en => { totalHp += en.hp; totalMax += en.hpMax; });
+                ctx.fillStyle = "rgba(255, 255, 255, 0.1)"; ctx.fillRect(100, 15, 600, 8);
+                ctx.fillStyle = "#f00"; ctx.fillRect(100, 15, 600 * (totalHp / totalMax), 8);
+            }
+
+            // Desenho do Ataque do Guerreiro
+            if (player.showCone && player.nome === "Guerreiro") {
+                const pA = Math.atan2(player.dirY, player.dirX);
+                ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(pA + Math.PI/2);
+                if (sprites.sword.complete && sprites.sword.naturalWidth !== 0) {
+                    ctx.drawImage(sprites.sword, -40, -130, 80, 130);
+                } else {
+                    ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,170, -Math.PI/4 - Math.PI/2, Math.PI/4 - Math.PI/2);
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.15)"; ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            // Efeito visual do Buraco Negro
+            blackHoles.forEach(bh => {
+                let g = ctx.createRadialGradient(bh.x, bh.y, bh.r*0.1, bh.x, bh.y, bh.r);
+                g.addColorStop(0, "black"); g.addColorStop(0.5, "#6200ea"); g.addColorStop(1, "transparent");
+                ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bh.x, bh.y, bh.r, 0, Math.PI*2); ctx.fill();
+            });
+
+            // Desenho dos Inimigos
+            enemies.forEach(en => {
+                ctx.save(); ctx.translate(en.x, en.y); ctx.fillStyle = en.color;
+                if (en.forma === "T") { ctx.beginPath(); ctx.moveTo(0,-en.r); ctx.lineTo(-en.r,en.r); ctx.lineTo(en.r,en.r); ctx.closePath(); ctx.fill(); }
+                else if (en.forma === "R") { ctx.fillRect(-en.r, -en.r, en.r*2, en.r*2); }
+                else if (en.forma === "H") { ctx.beginPath(); ctx.arc(0,0,en.r,0,Math.PI*2); ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle="white"; ctx.stroke(); }
+                else { ctx.beginPath(); ctx.arc(0,0,en.r,0,Math.PI*2); ctx.fill(); }
+                ctx.restore();
+
+                // Espadas orbitais do Boss
+                if (en.temEspadas) {
+                    en.anguloEspadas = (en.anguloEspadas || 0) + en.velRotacao;
+                    for (let i = 0; i < en.qtdEspadas; i++) {
+                        let anguloLamina = en.anguloEspadas + i * (Math.PI * 2 / en.qtdEspadas);
+                        let lx = en.x + Math.cos(anguloLamina) * en.raioOrbita;
+                        let ly = en.y + Math.sin(anguloLamina) * en.raioOrbita;
+
+                        ctx.save(); ctx.translate(lx, ly); ctx.rotate(anguloLamina + Math.PI / 2);
+                        ctx.fillStyle = "white"; ctx.shadowBlur = 10; ctx.shadowColor = "cyan";
+                        ctx.fillRect(-2, -20, 4, 40); ctx.restore();
+
+                        if (!player.invul && Math.hypot(player.x-lx, player.y-ly) < player.r+15) player.hp -= 1.0;
+                    }
+                }
+            });
+
+            particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill(); }); ctx.globalAlpha = 1;
+
+            // Desenho de Projéteis do Jogador
+            projectiles.forEach(p => {
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.atan2(p.dy, p.dx));
+                let img = p.type === 'FIREBALL' ? sprites.fireball : (p.type === 'DAGGER' ? sprites.dagger : sprites.arrow);
+                if (img.complete && img.naturalWidth !== 0) {
+                    ctx.drawImage(img, -p.r, -p.r, p.r*2, p.r*2);
+                } else {
+                    ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0,0,p.r,0,Math.PI*2); ctx.fill();
+                }
+                ctx.restore();
+            });
+
+            enemyProjectiles.forEach(p => { ctx.fillStyle = "#ff4400"; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill(); });
+
+            // Desenho do Jogador e Aura de Invulnerabilidade
+            ctx.save();
+            ctx.fillStyle = player.invul ? "#fff" : (player.isFrenzy ? "#f00" : player.cor);
+            ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
+            ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI*2); ctx.fill();
+
+            if (player.invul && player.nome === "Guerreiro") {
+                if (sprites.shield.complete && sprites.shield.naturalWidth !== 0) {
+                    ctx.drawImage(sprites.shield, player.x-45, player.y-45, 90, 90);
+                } else {
+                    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(player.x, player.y, player.r + 20, 0, Math.PI*2); ctx.stroke();
+                }
+            }
+            ctx.restore();
+            ctx.restore();
+        }
+
+        // Eventos de teclado
+        window.onkeydown = (e) => { keys[e.code] = true; if(e.code === 'KeyZ') castZ(); if(e.code === 'KeyX') castX(); };
+        window.onkeyup = (e) => keys[e.code] = false;
+
+        // Loop principal (Recursivo)
+        function loop() { if(active) { update(); draw(); requestAnimationFrame(loop); } }
+
+        // Finalização do Jogo
+        function showEndScreen(title, subtitle, color) { active = false; const s = document.getElementById('end-screen'); const t = document.getElementById('end-title'); t.innerText = title; t.style.color = color; document.getElementById('end-subtitle').innerText = subtitle; s.style.display = 'flex'; }
+    </script>
+}

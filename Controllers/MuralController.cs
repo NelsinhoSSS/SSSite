@@ -8,78 +8,78 @@ namespace SSSite.Controllers
 {
     public class MuralController : Controller
     {
-        // Injeção do banco de dados
+        // O Contexto é a ponte entre o código C# e o Banco de Dados (SQLite/SQL Server)
         private readonly AppDbContext _context;
 
+        // Construtor: Injeta o banco de dados para ser usado no Controller
         public MuralController(AppDbContext context)
         {
             _context = context;
         }
 
+        // Action principal: Carrega a lista de mensagens para exibir na tela
         public IActionResult Index()
         {
-            // Define o caminho da imagem de fundo para a View
-            ViewBag.BackgroundUrl = "/Imagens/QuadroPinos.jpg";
-
-            // Busca as mensagens no banco, ordenando da mais recente para a mais antiga
+            // OrderByDescending garante que a mensagem mais nova apareça primeiro no topo
             var mensagens = _context.Mural.OrderByDescending(m => m.Data).ToList();
-
             return View(mensagens);
         }
 
-        [HttpPost] // Indica que este método recebe dados de um formulário
+        [HttpPost] // Atributo de segurança que indica que este método recebe dados (POST)
         public IActionResult Postar(string autor, string conteudo)
         {
-            //Verifica se o mural já atingiu o limite máximo de 20 mensagens
+            // VALIDAÇÃO DE CAPACIDADE: 
+            // .Count() vai ao banco e conta os registros. Se houver 20, bloqueia novos envios.
             if (_context.Mural.Count() >= 20)
             {
+                // TempData guarda uma mensagem temporária que pode ser exibida na View (alerta de erro)
                 TempData["Erro"] = "O mural está cheio!";
                 return RedirectToAction("Index");
             }
 
-            // Ve se o conteúdo da mensagem não está vazio
+            // Verifica se a mensagem não está em branco ou só com espaços
             if (!string.IsNullOrWhiteSpace(conteudo))
             {
-                // Array de cores para garantir o visual aleatório de cada post
-                string[] cores = { "#00ff41", "#00d4ff", "#ff00ff", "#ffff00", "#ff4d4d", "#9d00ff" };
+                // Pool de cores neon para dar o estilo Cyberpunk aleatório aos post-its
+                string[] cores = { "#00ff41", "#00d4ff", "#ff00ff", "#ffff00", "#ff4d4d", "#9d00ff", "#ff8c00" };
 
                 var novaMsg = new MuralMensagem
                 {
-                    // Garante que o texto tenha no máximo 200 caracteres (corta se for maior to com preguisa de mudar pra travar no max)
+                    // SEGURANÇA NO SERVIDOR:
+                    // Mesmo que o JavaScript falhe ou seja burlado, o Substring garante 
+                    // que o texto salvo no banco nunca passe de 200 caracteres.
                     Conteudo = conteudo.Length > 200 ? conteudo.Substring(0, 200) : conteudo,
 
-                    // Se o autor estiver vazio, define como "Anônimo"
+                    // Operador ternário: se o autor for vazio, salva como "Anônimo"
                     Autor = string.IsNullOrWhiteSpace(autor) ? "Anônimo" : autor,
 
                     Data = DateTime.Now,
 
-                    // Pega uma cor aleatoria do array para cada nova mensagem
+                    // Sorteia um índice aleatório dentro do array de cores
                     CorNeon = cores[new Random().Next(cores.Length)]
                 };
 
-                // Adiciona o objeto ao rastreamento do Entity Framework
+                // Prepara a inclusão do objeto no rastreamento do banco
                 _context.Mural.Add(novaMsg);
 
-                //Salva as alterações no banco de dados
+                // COMMIT: Salva efetivamente as mudanças no arquivo de banco de dados (.db)
                 _context.SaveChanges();
             }
 
+            // Redireciona para a Index para "limpar" o formulário e mostrar a nova mensagem
             return RedirectToAction("Index");
         }
 
         [HttpPost]
         public IActionResult Excluir(int id)
         {
-            // Busca a mensagem específica pelo ID no banco
+            // .Find(id) busca diretamente pela Chave Primária, é a forma mais rápida de busca
             var msg = _context.Mural.Find(id);
 
             if (msg != null)
             {
-                // Remove a mensagem encontrada
                 _context.Mural.Remove(msg);
-
-                // Salva a remoção no banco de dados
-                _context.SaveChanges();
+                _context.SaveChanges(); // Confirma a exclusão no banco
             }
 
             return RedirectToAction("Index");

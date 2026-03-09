@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace SSSite.Controllers // Ajuste o nome conforme o seu projeto
+namespace SSSite.Controllers.Games // Ajuste o nome conforme o seu projeto
 {
     public class JogosController : Controller
     {
