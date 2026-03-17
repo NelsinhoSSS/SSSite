@@ -11,15 +11,15 @@ namespace SSSite.Models
         public int Id { get; set; }
 
         [Column("Conteudo")]
-        public string Conteudo { get; set; }
+        public string Conteudo { get; set; } = string.Empty;
 
         [Column("Autor")]
-        public string Autor { get; set; }
+        public string Autor { get; set; } = "Anônimo";
 
         [Column("Data")]
-        public DateTime Data { get; set; }
+        public DateTime Data { get; set; } = DateTime.Now;
 
         [Column("CorNeon")]
-        public string CorNeon { get; set; }
+        public string CorNeon { get; set; } = "#00ff41";
     }
 }

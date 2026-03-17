@@ -8,9 +8,13 @@ builder.Services.AddHttpClient();
 var url = Environment.GetEnvironmentVariable("SUPABASE_URL");
 var key = Environment.GetEnvironmentVariable("SUPABASE_KEY");
 
-builder.Services.AddCors(options => {
-    options.AddPolicy("AllowAll", b => b.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());
-});
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Isso evita que o BaseModel trave o JSON
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.PropertyNamingPolicy = null; // Mantém os nomes como estão no Model
+    });
 
 // Isso evita que o site dê erro se as variáveis estiverem vazias
 if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(key))
