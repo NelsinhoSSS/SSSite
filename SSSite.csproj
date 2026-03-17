@@ -7,6 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="DataBase\**" />
+    <Compile Remove="Migrations\**" />
+    <Content Remove="DataBase\**" />
+    <Content Remove="Migrations\**" />
+    <EmbeddedResource Remove="DataBase\**" />
+    <EmbeddedResource Remove="Migrations\**" />
+    <None Remove="DataBase\**" />
+    <None Remove="Migrations\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Models\Arena\ClassePersonagem.cs" />
     <Compile Remove="Models\DeckViewModel.cs" />
   </ItemGroup>
@@ -21,6 +32,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />
+    <PackageReference Include="supabase-csharp" Version="0.16.2" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0" />
   </ItemGroup>
 
 </Project>

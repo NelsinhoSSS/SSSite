@@ -1,13 +1,23 @@
-using Microsoft.EntityFrameworkCore;
-using SSSite.Data;
+using Supabase;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Configuração do SQLite
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHttpClient();
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowAll", b => b.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());
+});
 
-// 2. Configuração de Sessão (Essencial para o Modo ADM funcionar)
+// 2. Configuração do Supabase
+var url = Environment.GetEnvironmentVariable("SUPABASE_URL");
+var key = Environment.GetEnvironmentVariable("SUPABASE_KEY");
+
+// Isso evita que o site dê erro se as variáveis estiverem vazias
+if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(key))
+{
+    builder.Services.AddScoped(_ => new Supabase.Client(url, key));
+}
+
+// 3. Configuração de Sessão (Essencial para o Modo ADM funcionar)
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -18,11 +28,10 @@ builder.Services.AddSession(options =>
 
 // Adiciona suporte a HttpContext para o Layout acessar a Session
 builder.Services.AddHttpContextAccessor();
-
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
-
+app.UseCors("AllowAll");
 
 if (!app.Environment.IsDevelopment())
 {
@@ -32,12 +41,10 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
 
-// 3. Ativar Sessão (Sempre antes de Authorization)
+// 4. Ativar Sessão (Sempre antes de Authorization)
 app.UseSession();
-
 app.UseAuthorization();
 
 app.MapControllerRoute(
