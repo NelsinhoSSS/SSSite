@@ -24,15 +24,22 @@ namespace SSSite.Controllers.Mural
         {
             try
             {
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                // Garante que 'conteudo' do JSON vire 'Conteudo' no C#
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
                 var mensagens = await _httpClient.GetFromJsonAsync<List<MuralMensagem>>(_apiUrl, options);
 
-                // Mantendo sua ordenação original
-                return View(mensagens?.OrderByDescending(m => m.Data).ToList() ?? new List<MuralMensagem>());
+                // Se mensagens for null, garante uma lista vazia para não dar erro na View
+                var listaFinal = mensagens?.OrderByDescending(m => m.Data).ToList() ?? new List<MuralMensagem>();
+
+                return View(listaFinal);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erro ao conectar com a API no Render: {ex.Message}");
+                Console.WriteLine($"Erro: {ex.Message}");
                 return View(new List<MuralMensagem>());
             }
         }
@@ -54,7 +61,17 @@ namespace SSSite.Controllers.Mural
 
                 try
                 {
-                    await _httpClient.PostAsJsonAsync(_apiUrl, novaMsg);
+                    // Criamos um objeto limpo apenas com o que o banco precisa
+                    var dadosLimpos = new
+                    {
+                        Conteudo = novaMsg.Conteudo,
+                        Autor = novaMsg.Autor,
+                        Data = novaMsg.Data,
+                        CorNeon = novaMsg.CorNeon
+                    };
+
+                    // Enviamos esse objeto limpo para a API
+                    await _httpClient.PostAsJsonAsync(_apiUrl, dadosLimpos);
                 }
                 catch (Exception ex)
                 {
