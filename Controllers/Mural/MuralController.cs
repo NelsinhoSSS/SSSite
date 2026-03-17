@@ -6,58 +6,52 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Linq;
-using System.Text.Json; // Importante para lidar com nomes de letras minúsculas
+using System.Text.Json;
 
-namespace SSSite.Controllers
+namespace SSSite.Controllers.Mural
 {
     public class MuralController : Controller
     {
         private readonly HttpClient _httpClient;
-        private readonly string _apiUrl = "https://kwhejdwazofellckarpt.supabase.co";
+
+        // URL oficial do seu servidor no Render que faz a ponte com o Supabase
+        private readonly string _apiUrl = "https://sssitesss.onrender.com/api/mural";
 
         public MuralController(IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClientFactory.CreateClient();
         }
 
+        // 1. CARREGAR MENSAGENS
         public async Task<IActionResult> Index()
         {
             try
             {
-                //configuração para aceitar nomes de campos "bagunçados" (Maiúsculo ou Minúsculo)
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
+                // Configuração para aceitar o JSON do servidor sem erro de maiúsculas/minúsculas
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-                //requisição para o servidor
-                var resposta = await _httpClient.GetAsync(_apiUrl);
+                // O site tenta buscar a lista de mensagens no Render
+                var mensagens = await _httpClient.GetFromJsonAsync<List<MuralMensagem>>(_apiUrl, options);
 
-                if (resposta.IsSuccessStatusCode)
-                {
-                    // Converte o JSON do servidor para a nossa lista usando as opções acima
-                    var mensagens = await resposta.Content.ReadFromJsonAsync<List<MuralMensagem>>(options);
-
-                    // Retorna a lista para a View (se for nula, manda uma lista vazia)
-                    return View(mensagens?.OrderByDescending(m => m.Data).ToList() ?? new List<MuralMensagem>());
-                }
-
-                // Se o servidor responder erro (ex: 404 ou 500)
-                return View(new List<MuralMensagem>());
+                // Retorna a lista para a View (se vier nulo, manda uma lista vazia)
+                return View(mensagens?.OrderByDescending(m => m.Data).ToList() ?? new List<MuralMensagem>());
             }
             catch (Exception ex)
             {
-                // Se houver erro de conexão total
+                // Log de erro no console do Visual Studio para debug
+                Console.WriteLine($"Erro ao conectar com a API no Render: {ex.Message}");
                 return View(new List<MuralMensagem>());
             }
         }
 
+        // 2. CRIAR MENSAGEM
         [HttpPost]
         public async Task<IActionResult> Postar(string autor, string conteudo)
         {
             if (!string.IsNullOrWhiteSpace(conteudo))
             {
-                string[] cores = { "#00ff41", "#00d4ff", "#ff00ff", "#ffff00", "#ff4d4d", "#9d00ff", "#ff8c00" };
+                // Cores neon aleatórias para o estilo Cyberpunk
+                string[] cores = { "#00ff41", "#00d4ff", "#ff00ff", "#ffff00", "#ff4d4d", "#9d00ff" };
 
                 var novaMsg = new MuralMensagem
                 {
@@ -69,22 +63,31 @@ namespace SSSite.Controllers
 
                 try
                 {
+                    // Envia os dados para a API salvar no Supabase
                     await _httpClient.PostAsJsonAsync(_apiUrl, novaMsg);
                 }
-                catch { /* Silencia erro no post */ }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erro ao postar: {ex.Message}");
+                }
             }
 
             return RedirectToAction("Index");
         }
 
+        // 3. EXCLUIR MENSAGEM
         [HttpPost]
         public async Task<IActionResult> Excluir(int id)
         {
             try
             {
+                // Avisa o Render para deletar no banco de dados
                 await _httpClient.DeleteAsync($"{_apiUrl}/{id}");
             }
-            catch { /* Silencia erro no delete */ }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao excluir: {ex.Message}");
+            }
 
             return RedirectToAction("Index");
         }
