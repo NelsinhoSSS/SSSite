@@ -2,7 +2,6 @@
 @{
     ViewData["Title"] = "MURAL";
 }
-
 <style>
     /* 1. FUNDO DO QUADRO: Mantemos o efeito de paralaxe */
     .mural-background {
@@ -31,19 +30,14 @@
         letter-spacing: 2px;
         cursor: pointer;
         z-index: 100; /* Garante que fique acima de tudo */
-        /* Efeito de sombra neon (glow) */
         box-shadow: 0 0 10px rgba(0, 255, 65, 0.5), inset 0 0 5px rgba(0, 255, 65, 0.3);
-        /* Transição suave para o efeito de hover */
         transition: all 0.3s ease-in-out;
     }
 
-        /* EFEITO DE HOVER (Passar o mouse) */
         .btn-criar-msg:hover {
-            background: #00ff41; /* Fundo preenche com verde neon */
-            color: #0a0a0a; /* Texto fica escuro */
-            /* Brilho neon mais intenso */
+            background: #00ff41;
+            color: #0a0a0a;
             box-shadow: 0 0 20px #00ff41, 0 0 40px #00ff41;
-            /* Leve aumento de tamanho */
             transform: scale(1.05);
         }
 
@@ -56,7 +50,7 @@
         align-items: start;
     }
 
-    /* 4. O CARD (POST-IT): Estilo mantido */
+    /* 4. O CARD (POST-IT) */
     .card-postit {
         background: rgba(15, 15, 15, 0.98);
         padding: 30px 20px 15px 20px;
@@ -84,7 +78,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
-    /* Estilo para o botão 'X' de deletar */
     .btn-delete-x {
         position: absolute;
         top: 5px;
@@ -100,11 +93,9 @@
         .btn-delete-x:hover {
             color: #ff4d4d;
         }
-
 </style>
 
 <div class="mural-background">
-    
     <button type="button" class="btn-criar-msg" data-bs-toggle="modal" data-bs-target="#modalMural">
         [ NOVA MENSAGEM ]
     </button>
@@ -114,7 +105,6 @@
             @foreach (var msg in Model)
             {
                 <div class="card-postit" style="border-left-color: @msg.CorNeon; --glow-color: @(msg.CorNeon)44;">
-
                     <form asp-action="Excluir" method="post">
                         <input type="hidden" name="id" value="@msg.Id" />
                         <button type="submit" class="btn-delete-x" onclick="return confirm('Apagar post-it?')">&times;</button>
@@ -173,7 +163,6 @@
                 const total = 200;
                 const len = $(this).val().length;
                 const restante = total - len;
-
                 $counter.text(restante);
 
                 if (restante <= 20) {

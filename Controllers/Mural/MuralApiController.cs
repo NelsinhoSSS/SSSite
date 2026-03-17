@@ -4,7 +4,7 @@ using Supabase;
 
 namespace SSSite.Controllers
 {
-    [Route("api/mural")] // Define a URL como https://sssitesss.onrender.com/api/mural
+    [Route("api/mural")]
     [ApiController]
     public class MuralApiController : ControllerBase
     {
@@ -15,53 +15,25 @@ namespace SSSite.Controllers
             _supabase = supabase;
         }
 
-        // GET: api/mural (Busca as mensagens)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MuralMensagem>>> GetMensagens()
+        public async Task<IActionResult> Get()
         {
-            try
-            {
-                // MUDANÇA AQUI: Busca da tabela MuralMensagem
-                var resultado = await _supabase.From<MuralMensagem>().Get();
-                return Ok(resultado.Models);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { erro = ex.Message });
-            }
+            var resultado = await _supabase.From<MuralMensagem>().Get();
+            return Ok(resultado.Models);
         }
 
-        // POST: api/mural (Cria nova mensagem)
         [HttpPost]
-        public async Task<IActionResult> PostMensagem([FromBody] MuralMensagem mensagem)
+        public async Task<IActionResult> Post([FromBody] MuralMensagem msg)
         {
-            try
-            {
-                // Garante que a data seja gravada agora se vier vazia
-                if (mensagem.Data == default) mensagem.Data = DateTime.UtcNow;
-
-                await _supabase.From<MuralMensagem>().Insert(mensagem);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { erro = ex.Message });
-            }
+            await _supabase.From<MuralMensagem>().Insert(msg);
+            return Ok();
         }
 
-        // DELETE: api/mural/{id} (Exclui mensagem)
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMensagem(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                await _supabase.From<MuralMensagem>().Where(x => x.Id == id).Delete();
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { erro = ex.Message });
-            }
+            await _supabase.From<MuralMensagem>().Where(x => x.Id == id).Delete();
+            return Ok();
         }
     }
 }

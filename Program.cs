@@ -3,13 +3,14 @@ using Supabase;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpClient();
-builder.Services.AddCors(options => {
-    options.AddPolicy("AllowAll", b => b.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());
-});
 
 // 2. Configuração do Supabase
 var url = Environment.GetEnvironmentVariable("SUPABASE_URL");
 var key = Environment.GetEnvironmentVariable("SUPABASE_KEY");
+
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowAll", b => b.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());
+});
 
 // Isso evita que o site dê erro se as variáveis estiverem vazias
 if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(key))

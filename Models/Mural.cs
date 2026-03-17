@@ -1,12 +1,13 @@
 ﻿using Postgrest.Attributes;
 using Postgrest.Models;
+using System;
 
 namespace SSSite.Models
 {
-    [Table("MuralMensagem")] // Força o nome exato da tabela no Supabase
+    [Table("MuralMensagem")]
     public class MuralMensagem : BaseModel
     {
-        [PrimaryKey("Id", false)] // O false indica que o banco gera o ID (SERIAL)
+        [PrimaryKey("Id", false)]
         public int Id { get; set; }
 
         [Column("Conteudo")]
