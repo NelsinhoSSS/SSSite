@@ -1,6 +1,5 @@
 ﻿using Postgrest.Attributes;
 using Postgrest.Models;
-using System;
 
 namespace SSSite.Models
 {
@@ -11,13 +10,13 @@ namespace SSSite.Models
         public int Id { get; set; }
 
         [Column("Conteudo")]
-        public string Conteudo { get; set; } = string.Empty;
+        public string Conteudo { get; set; } = "";
 
         [Column("Autor")]
         public string Autor { get; set; } = "Anônimo";
 
         [Column("Data")]
-        public DateTime Data { get; set; } = DateTime.Now;
+        public DateTime Data { get; set; }
 
         [Column("CorNeon")]
         public string CorNeon { get; set; } = "#00ff41";

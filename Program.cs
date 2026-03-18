@@ -2,7 +2,7 @@ using Supabase;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient(); // Sem isso, o Controller não consegue "ligar" para a API
 
 // 2. Configuração do Supabase
 var url = Environment.GetEnvironmentVariable("SUPABASE_URL");

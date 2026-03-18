@@ -24,23 +24,24 @@ namespace SSSite.Controllers.Mural
         {
             try
             {
+                // Configuração vital para o mapeamento das propriedades
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-                // Buscamos os dados da API no Render
+                // Busca as mensagens no Render
                 var mensagens = await _httpClient.GetFromJsonAsync<List<MuralMensagem>>(_apiUrl, options);
 
-                // O segredo para não dar erro na View: converter explicitamente para List
+                // Se mensagens for null, envia lista vazia. Se tiver dados, ordena por data.
                 var listaFinal = mensagens?.OrderByDescending(m => m.Data).ToList() ?? new List<MuralMensagem>();
 
                 return View(listaFinal);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erro ao carregar Mural: {ex.Message}");
+                // Se der erro, pelo menos a página carrega vazia sem travar
+                Console.WriteLine($"ERRO AO BUSCAR DADOS: {ex.Message}");
                 return View(new List<MuralMensagem>());
             }
         }
-
         [HttpPost]
         public async Task<IActionResult> Postar(string autor, string conteudo)
         {
