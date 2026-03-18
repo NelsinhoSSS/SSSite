@@ -24,21 +24,24 @@ namespace SSSite.Controllers.Mural
         {
             try
             {
-                // Configuração vital para o mapeamento das propriedades
+                // O segredo para o 'Total: 0' virar 'Total: X'
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-                // Busca as mensagens no Render
+                // Busca os dados lá no Render
                 var mensagens = await _httpClient.GetFromJsonAsync<List<MuralMensagem>>(_apiUrl, options);
 
-                // Se mensagens for null, envia lista vazia. Se tiver dados, ordena por data.
-                var listaFinal = mensagens?.OrderByDescending(m => m.Data).ToList() ?? new List<MuralMensagem>();
+                if (mensagens == null || mensagens.Count == 0)
+                {
+                    // Se cair aqui, a API respondeu mas não veio nada
+                    return View(new List<MuralMensagem>());
+                }
 
-                return View(listaFinal);
+                return View(mensagens.OrderByDescending(m => m.Data).ToList());
             }
             catch (Exception ex)
             {
-                // Se der erro, pelo menos a página carrega vazia sem travar
-                Console.WriteLine($"ERRO AO BUSCAR DADOS: {ex.Message}");
+                // Se cair aqui, o site nem conseguiu falar com o Render
+                Console.WriteLine($"Erro de conexão: {ex.Message}");
                 return View(new List<MuralMensagem>());
             }
         }

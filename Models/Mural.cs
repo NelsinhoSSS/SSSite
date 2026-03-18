@@ -9,7 +9,7 @@ namespace SSSite.Models
         [PrimaryKey("Id", false)]
         public int Id { get; set; }
 
-        [Column("Conteudo")]
+        [Column("Conteudo")] 
         public string Conteudo { get; set; } = "";
 
         [Column("Autor")]

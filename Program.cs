@@ -1,28 +1,45 @@
 using Supabase;
+using Microsoft.AspNetCore.Http.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpClient(); // Sem isso, o Controller não consegue "ligar" para a API
+// 1. CONFIGURAÇÃO DE REDE E JSON
+builder.Services.AddHttpClient();
 
-// 2. Configuração do Supabase
+// Define a política de CORS para que o seu site local consiga ler os dados do Render
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+// Configura os Controllers para não travarem ao ler o Supabase (BaseModel)
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        // ESSENCIAL: Evita o erro 500 ao transformar dados do Supabase em JSON
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+
+        // Mantém os nomes das propriedades exatamente como no Model (Maiúsculas)
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+
+        // Aceita qualquer variação de maiúscula/minúscula no JSON
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
+
+// 2. CONFIGURAÇÃO DO SUPABASE
 var url = Environment.GetEnvironmentVariable("SUPABASE_URL");
 var key = Environment.GetEnvironmentVariable("SUPABASE_KEY");
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // Isso evita que o BaseModel trave o JSON
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-        options.JsonSerializerOptions.PropertyNamingPolicy = null; // Mantém os nomes como estão no Model
-    });
+// Registramos o cliente do Supabase. 
+// Se as chaves estiverem vazias no Render, o erro aparecerá nos logs.
+builder.Services.AddScoped(_ => new Supabase.Client(url!, key!));
 
-// Isso evita que o site dê erro se as variáveis estiverem vazias
-if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(key))
-{
-    builder.Services.AddScoped(_ => new Supabase.Client(url, key));
-}
-
-// 3. Configuração de Sessão (Essencial para o Modo ADM funcionar)
+// 3. CONFIGURAÇÃO DE SESSÃO E CONTEXTO
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -30,13 +47,12 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
-
-// Adiciona suporte a HttpContext para o Layout acessar a Session
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
-app.UseCors("AllowAll");
+
+// 4. PIPELINE DE EXECUÇÃO
+app.UseCors("AllowAll"); // Ativa a permissão de acesso que definimos acima
 
 if (!app.Environment.IsDevelopment())
 {
@@ -48,7 +64,6 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-// 4. Ativar Sessão (Sempre antes de Authorization)
 app.UseSession();
 app.UseAuthorization();
 
