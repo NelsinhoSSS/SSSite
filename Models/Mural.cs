@@ -6,19 +6,10 @@ namespace SSSite.Models
     [Table("MuralMensagem")]
     public class MuralMensagem : BaseModel
     {
-        [PrimaryKey("Id", false)]
-        public int Id { get; set; }
-
-        [Column("Conteudo")] 
-        public string Conteudo { get; set; } = "";
-
-        [Column("Autor")]
-        public string Autor { get; set; } = "Anônimo";
-
-        [Column("Data")]
-        public DateTime Data { get; set; }
-
-        [Column("CorNeon")]
-        public string CorNeon { get; set; } = "#00ff41";
+        public int id { get; set; }
+        public string conteudo { get; set; } = "";
+        public string autor { get; set; } = "";
+        public DateTime data { get; set; } = DateTime.Now;
+        public string corneon { get; set; } = "#00ff41";
     }
 }

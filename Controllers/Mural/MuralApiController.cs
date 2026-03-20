@@ -8,32 +8,32 @@ namespace SSSite.Controllers
     [ApiController]
     public class MuralApiController : ControllerBase
     {
-        private readonly Client _supabase;
+        private readonly Supabase.Client _supabase;
 
-        public MuralApiController(Client supabase)
+        public MuralApiController(Supabase.Client supabase)
         {
             _supabase = supabase;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> GetMensagens()
         {
-            var resultado = await _supabase.From<MuralMensagem>().Get();
-            return Ok(resultado.Models);
-        }
+            try
+            {
+                // Busca da tabela MuralMensagem usando o Model com letras minúsculas
+                var response = await _supabase.From<MuralMensagem>().Get();
 
-        [HttpPost]
-        public async Task<IActionResult> Post([FromBody] MuralMensagem msg)
-        {
-            await _supabase.From<MuralMensagem>().Insert(msg);
-            return Ok();
-        }
+                // Retorna a lista de mensagens. Se estiver vazio, retorna lista limpa [].
+                var mensagens = response.Models ?? new List<MuralMensagem>();
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            await _supabase.From<MuralMensagem>().Where(x => x.Id == id).Delete();
-            return Ok();
+                return Ok(mensagens);
+            }
+            catch (Exception ex)
+            {
+                // Log de erro básico para o console do Render
+                Console.WriteLine($"Erro na API: {ex.Message}");
+                return StatusCode(500, "Erro ao acessar o banco de dados.");
+            }
         }
     }
 }

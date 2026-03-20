@@ -6,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. CONFIGURAÇÃO DE REDE E JSON
 builder.Services.AddHttpClient();
 
-// Define a política de CORS para que o seu site local consiga ler os dados do Render
+// Define a política de CORS para permitir que o site local acesse o Render
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -17,17 +17,17 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configura os Controllers para não travarem ao ler o Supabase (BaseModel)
+// Configuração de Controllers otimizada para letras minúsculas
 builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
-        // ESSENCIAL: Evita o erro 500 ao transformar dados do Supabase em JSON
+        // ESSENCIAL: Mantemos isso porque o BaseModel do Supabase ainda tem referências circulares
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
 
-        // Mantém os nomes das propriedades exatamente como no Model (Maiúsculas)
+        // Como agora seu Model é minúsculo (igual ao JSON), não precisamos forçar NamingPolicy
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
 
-        // Aceita qualquer variação de maiúscula/minúscula no JSON
+        // Mantemos como garantia para pequenas variações
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
 
@@ -35,11 +35,10 @@ builder.Services.AddControllersWithViews()
 var url = Environment.GetEnvironmentVariable("SUPABASE_URL");
 var key = Environment.GetEnvironmentVariable("SUPABASE_KEY");
 
-// Registramos o cliente do Supabase. 
-// Se as chaves estiverem vazias no Render, o erro aparecerá nos logs.
+// Registramos o cliente (O Render vai ler as variáveis de ambiente aqui)
 builder.Services.AddScoped(_ => new Supabase.Client(url!, key!));
 
-// 3. CONFIGURAÇÃO DE SESSÃO E CONTEXTO
+// 3. SESSÃO E ACESSO AO CONTEXTO
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -52,7 +51,7 @@ builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 
 // 4. PIPELINE DE EXECUÇÃO
-app.UseCors("AllowAll"); // Ativa a permissão de acesso que definimos acima
+app.UseCors("AllowAll");
 
 if (!app.Environment.IsDevelopment())
 {
@@ -64,6 +63,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
+// Sessão SEMPRE antes de Authorization
 app.UseSession();
 app.UseAuthorization();
 

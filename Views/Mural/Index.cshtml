@@ -1,10 +1,71 @@
 ﻿@model List<SSSite.Models.MuralMensagem>
 @{
     ViewData["Title"] = "MURAL";
-    <h2 style="color:white;">Total de mensagens recebidas: @Model.Count</h2>
 }
+
+<div class="mural-background">
+    <div style="position: absolute; top: 10px; right: 20px; color: rgba(0, 255, 65, 0.5); font-family: monospace;">
+        STATUS: @Model.Count MENSAGENS_CARREGADAS
+    </div>
+
+    <button type="button" class="btn-criar-msg" data-bs-toggle="modal" data-bs-target="#modalMural">
+        [ NOVA MENSAGEM ]
+    </button>
+
+    <div class="container-fluid">
+        <div class="mural-grid">
+            @foreach (var msg in Model)
+            {
+                <div class="card-postit" style="border-left-color: @msg.corneon; --glow-color: @(msg.corneon)44;">
+                    <form asp-action="Excluir" method="post">
+                        <input type="hidden" name="id" value="@msg.id" />
+                        <button type="submit" class="btn-delete-x" onclick="return confirm('Apagar post-it?')">&times;</button>
+                    </form>
+
+                    <p class="text-white mb-3" style="font-style: italic; flex-grow: 1; font-size: 1.1rem;">
+                        "@msg.conteudo"
+                    </p>
+
+                    <div class="d-flex justify-content-between align-items-center border-top pt-2" style="border-color: rgba(255,255,255,0.1) !important;">
+                        <span style="color: @msg.corneon; font-weight: bold;">— @msg.autor</span>
+                        <small class="text-muted">@msg.data.ToString("HH:mm")</small>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalMural" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark border-success" style="box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);">
+            <form asp-action="Postar" method="post">
+                <div class="modal-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="text-success m-0 fw-bold" style="font-family: 'Courier New', monospace; letter-spacing: 1px;">> NOVO_RECADO</h5>
+                        <span id="charCount" class="badge bg-dark text-success border border-success">200</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-white-50 small mb-1">Sua Mensagem</label>
+                        <textarea id="txtConteudo" name="conteudo" class="form-control bg-black text-white border-secondary"
+                                  rows="5" required maxlength="200"
+                                  placeholder="Escreva algo para o futuro..." style="font-family: 'Courier New', monospace;"></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="text-white-50 small mb-1">Assinatura</label>
+                        <input type="text" name="autor" class="form-control bg-black text-white border-secondary" maxlength="30" placeholder="Anônimo" style="font-family: 'Courier New', monospace;">
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 fw-bold" style="text-transform: uppercase; letter-spacing: 2px;">[ FIXAR NO QUADRO ]</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <style>
-    /* 1. FUNDO DO QUADRO: Mantemos o efeito de paralaxe */
     .mural-background {
         background-image: url('/img/QuadroPinos.jpg');
         background-size: cover;
@@ -12,25 +73,24 @@
         background-attachment: fixed;
         min-height: 100vh;
         width: 100%;
-        padding-top: 120px; /* Aumentado para dar espaço ao novo botão */
-        position: relative; /* Essencial para o posicionamento do botão */
+        padding-top: 120px;
+        position: relative;
     }
 
-    /* 2. NOVO ESTILO DO BOTÃO "CRIAR MENSAGEM" (Neon) */
     .btn-criar-msg {
         position: absolute;
-        top: 30px; /* Distância do topo */
-        left: 30px; /* Distância da esquerda */
-        background: rgba(10, 10, 10, 0.9); /* Fundo escuro quase transparente */
-        color: #00ff41; /* Verde Neon Matrix */
+        top: 30px;
+        left: 30px;
+        background: rgba(10, 10, 10, 0.9);
+        color: #00ff41;
         border: 2px solid #00ff41;
         padding: 12px 24px;
-        font-family: 'Courier New', Courier, monospace; /* Fonte 'tech' */
+        font-family: 'Courier New', Courier, monospace;
         font-weight: bold;
         text-transform: uppercase;
         letter-spacing: 2px;
         cursor: pointer;
-        z-index: 100; /* Garante que fique acima de tudo */
+        z-index: 100;
         box-shadow: 0 0 10px rgba(0, 255, 65, 0.5), inset 0 0 5px rgba(0, 255, 65, 0.3);
         transition: all 0.3s ease-in-out;
     }
@@ -42,7 +102,6 @@
             transform: scale(1.05);
         }
 
-    /* 3. GRID DINÂMICO DOS POST-ITS */
     .mural-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -51,7 +110,6 @@
         align-items: start;
     }
 
-    /* 4. O CARD (POST-IT) */
     .card-postit {
         background: rgba(15, 15, 15, 0.98);
         padding: 30px 20px 15px 20px;
@@ -95,64 +153,6 @@
             color: #ff4d4d;
         }
 </style>
-
-<div class="mural-background">
-    <button type="button" class="btn-criar-msg" data-bs-toggle="modal" data-bs-target="#modalMural">
-        [ NOVA MENSAGEM ]
-    </button>
-
-    <div class="container-fluid">
-        <div class="mural-grid">
-            @foreach (var msg in Model)
-            {
-                <div class="card-postit" style="border-left-color: @msg.CorNeon; --glow-color: @(msg.CorNeon)44;">
-                    <form asp-action="Excluir" method="post">
-                        <input type="hidden" name="id" value="@msg.Id" />
-                        <button type="submit" class="btn-delete-x" onclick="return confirm('Apagar post-it?')">&times;</button>
-                    </form>
-
-                    <p class="text-white mb-3" style="font-style: italic; flex-grow: 1; font-size: 1.1rem;">
-                        "@msg.Conteudo"
-                    </p>
-
-                    <div class="d-flex justify-content-between align-items-center border-top pt-2" style="border-color: rgba(255,255,255,0.1) !important;">
-                        <span style="color: @msg.CorNeon; font-weight: bold;">— @msg.Autor</span>
-                        <small class="text-muted">@msg.Data.ToString("HH:mm")</small>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modalMural" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark border-success" style="box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);">
-            <form asp-action="Postar" method="post">
-                <div class="modal-body p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="text-success m-0 fw-bold" style="font-family: 'Courier New', monospace; letter-spacing: 1px;">> NOVO_RECADO</h5>
-                        <span id="charCount" class="badge bg-dark text-success border border-success">200</span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="text-white-50 small mb-1">Sua Mensagem</label>
-                        <textarea id="txtConteudo" name="conteudo" class="form-control bg-black text-white border-secondary"
-                                  rows="5" required maxlength="200"
-                                  placeholder="Escreva algo para o futuro..." style="font-family: 'Courier New', monospace;"></textarea>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="text-white-50 small mb-1">Assinatura</label>
-                        <input type="text" name="autor" class="form-control bg-black text-white border-secondary" maxlength="30" placeholder="Anônimo" style="font-family: 'Courier New', monospace;">
-                    </div>
-
-                    <button type="submit" class="btn btn-success w-100 fw-bold" style="text-transform: uppercase; letter-spacing: 2px;">[ FIXAR NO QUADRO ]</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 @section Scripts {
     <script>

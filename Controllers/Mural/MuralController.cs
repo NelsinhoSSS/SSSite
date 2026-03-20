@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SSSite.Models;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
-using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace SSSite.Controllers.Mural
 {
@@ -24,27 +25,20 @@ namespace SSSite.Controllers.Mural
         {
             try
             {
-                // O segredo para o 'Total: 0' virar 'Total: X'
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                // Ele vai buscar o JSON com 'conteudo', 'corneon', etc.
+                var mensagens = await _httpClient.GetFromJsonAsync<List<MuralMensagem>>(_apiUrl);
 
-                // Busca os dados lá no Render
-                var mensagens = await _httpClient.GetFromJsonAsync<List<MuralMensagem>>(_apiUrl, options);
-
-                if (mensagens == null || mensagens.Count == 0)
-                {
-                    // Se cair aqui, a API respondeu mas não veio nada
-                    return View(new List<MuralMensagem>());
-                }
-
-                return View(mensagens.OrderByDescending(m => m.Data).ToList());
+                // Se a API retornar algo, ele manda pra View. Se não, manda lista vazia.
+                return View(mensagens?.OrderByDescending(m => m.data).ToList() ?? new List<MuralMensagem>());
             }
             catch (Exception ex)
             {
-                // Se cair aqui, o site nem conseguiu falar com o Render
-                Console.WriteLine($"Erro de conexão: {ex.Message}");
+                // Se der erro de conexão, você verá aqui no Debug
+                System.Diagnostics.Debug.WriteLine("Erro ao conectar na API: " + ex.Message);
                 return View(new List<MuralMensagem>());
             }
         }
+
         [HttpPost]
         public async Task<IActionResult> Postar(string autor, string conteudo)
         {
@@ -54,10 +48,10 @@ namespace SSSite.Controllers.Mural
 
                 var novaMsg = new MuralMensagem
                 {
-                    Conteudo = conteudo.Length > 200 ? conteudo.Substring(0, 200) : conteudo,
-                    Autor = string.IsNullOrWhiteSpace(autor) ? "Anônimo" : autor,
-                    Data = DateTime.Now,
-                    CorNeon = cores[new Random().Next(cores.Length)]
+                    conteudo = conteudo.Length > 200 ? conteudo.Substring(0, 200) : conteudo,
+                    autor = string.IsNullOrWhiteSpace(autor) ? "Anônimo" : autor,
+                    data = DateTime.Now,
+                    corneon = cores[new Random().Next(cores.Length)]
                 };
 
                 try
@@ -65,10 +59,10 @@ namespace SSSite.Controllers.Mural
                     // Criamos um objeto limpo apenas com o que o banco precisa
                     var dadosLimpos = new
                     {
-                        Conteudo = novaMsg.Conteudo,
-                        Autor = novaMsg.Autor,
-                        Data = novaMsg.Data,
-                        CorNeon = novaMsg.CorNeon
+                        Conteudo = novaMsg.conteudo,
+                        Autor = novaMsg.autor,
+                        Data = novaMsg.data,
+                        CorNeon = novaMsg.corneon
                     };
 
                     // Enviamos esse objeto limpo para a API
