@@ -4,7 +4,7 @@ using Supabase;
 
 namespace SSSite.Controllers
 {
-    [Route("api/mural")]
+    [Route("api/Mural")]
     [ApiController]
     public class MuralApiController : ControllerBase
     {

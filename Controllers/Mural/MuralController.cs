@@ -1,44 +1,40 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SSSite.Models;
+using Supabase;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SSSite.Controllers.Mural
 {
     public class MuralController : Controller
     {
-        private readonly HttpClient _httpClient;
-        private readonly string _apiUrl = "https://sssitesss.onrender.com/api/mural";
+        private readonly Supabase.Client _supabase;
 
-        public MuralController(IHttpClientFactory httpClientFactory)
+        public MuralController(Supabase.Client supabase)
         {
-            _httpClient = httpClientFactory.CreateClient();
+            _supabase = supabase;
         }
 
+        // 1. LISTAR MENSAGENS
         public async Task<IActionResult> Index()
         {
             try
             {
-                // Ele vai buscar o JSON com 'conteudo', 'corneon', etc.
-                var mensagens = await _httpClient.GetFromJsonAsync<List<MuralMensagem>>(_apiUrl);
+                var response = await _supabase.From<MuralMensagem>().Get();
+                var mensagens = response.Models;
 
-                // Se a API retornar algo, ele manda pra View. Se não, manda lista vazia.
-                return View(mensagens?.OrderByDescending(m => m.data).ToList() ?? new List<MuralMensagem>());
+                // Ordena pelas mais recentes
+                return View(mensagens.OrderByDescending(m => m.data).ToList());
             }
             catch (Exception ex)
             {
-                // Se der erro de conexão, você verá aqui no Debug
-                System.Diagnostics.Debug.WriteLine("Erro ao conectar na API: " + ex.Message);
+                Console.WriteLine("Erro ao carregar mural: " + ex.Message);
                 return View(new List<MuralMensagem>());
             }
         }
 
+        // 2. CRIAR MENSAGEM
         [HttpPost]
         public async Task<IActionResult> Postar(string autor, string conteudo)
         {
@@ -56,17 +52,7 @@ namespace SSSite.Controllers.Mural
 
                 try
                 {
-                    // Criamos um objeto limpo apenas com o que o banco precisa
-                    var dadosLimpos = new
-                    {
-                        Conteudo = novaMsg.conteudo,
-                        Autor = novaMsg.autor,
-                        Data = novaMsg.data,
-                        CorNeon = novaMsg.corneon
-                    };
-
-                    // Enviamos esse objeto limpo para a API
-                    await _httpClient.PostAsJsonAsync(_apiUrl, dadosLimpos);
+                    await _supabase.From<MuralMensagem>().Insert(novaMsg);
                 }
                 catch (Exception ex)
                 {
@@ -76,17 +62,23 @@ namespace SSSite.Controllers.Mural
             return RedirectToAction("Index");
         }
 
+        // 3. EXCLUIR MENSAGEM (A que faltava!)
         [HttpPost]
         public async Task<IActionResult> Excluir(int id)
         {
             try
             {
-                await _httpClient.DeleteAsync($"{_apiUrl}/{id}");
+                // O Supabase usa LINQ para filtrar o que deve ser apagado
+                await _supabase
+                    .From<MuralMensagem>()
+                    .Where(x => x.id == id)
+                    .Delete();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erro ao excluir: {ex.Message}");
+                Console.WriteLine($"Erro ao excluir post-it {id}: {ex.Message}");
             }
+
             return RedirectToAction("Index");
         }
     }
