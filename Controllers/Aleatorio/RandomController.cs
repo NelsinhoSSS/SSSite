@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
 
-namespace SeuProjeto.Controllers
+namespace SSSite.Controllers.Aleatorio
 {
     public class RandomController : Controller
     {

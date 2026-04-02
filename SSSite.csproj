@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\Mural\MuralApiController.cs" />
     <Compile Remove="Models\Arena\ClassePersonagem.cs" />
     <Compile Remove="Models\DeckViewModel.cs" />
   </ItemGroup>

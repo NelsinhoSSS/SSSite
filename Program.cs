@@ -1,21 +1,21 @@
-using Supabase;
-using Microsoft.AspNetCore.Http.Json;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. CONFIGURAÇÃO DO SUPABASE
-// Ele tenta pegar do Sistema (Render) ou do JSON (Visual Studio)
 var url = Environment.GetEnvironmentVariable("SUPABASE_URL") ?? builder.Configuration["Supabase:Url"];
 var key = Environment.GetEnvironmentVariable("SUPABASE_KEY") ?? builder.Configuration["Supabase:Key"];
 
 if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(key))
 {
-    // Isso evita o erro de tela vermelha e te avisa no console o que falta
     Console.WriteLine("AVISO: Chaves do Supabase não encontradas!");
 }
 else
 {
-    builder.Services.AddScoped(_ => new Supabase.Client(url, key, new SupabaseOptions { AutoConnectRealtime = true }));
+    builder.Services.AddHttpClient("Supabase", client =>
+    {
+        client.BaseAddress = new Uri(url);
+        client.DefaultRequestHeaders.Add("apikey", key);
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {key}");
+    });
 }
 
 // 2. SERVIÇOS E CONTROLLERS
@@ -30,6 +30,7 @@ builder.Services.AddControllersWithViews()
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
+builder.Services.AddHostedService<SSSite.Controllers.SorteioBackgroundService>();
 
 var app = builder.Build();
 
