@@ -30,7 +30,6 @@ builder.Services.AddControllersWithViews()
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
-builder.Services.AddHostedService<SSSite.Controllers.SorteioBackgroundService>();
 
 var app = builder.Build();
 
