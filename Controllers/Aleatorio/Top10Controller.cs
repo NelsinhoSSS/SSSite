@@ -7,6 +7,10 @@ namespace SSSite.Controllers
     public class Top10Controller : Controller
     {
         private readonly IHttpClientFactory _httpFactory;
+        private readonly JsonSerializerOptions _jsonOpts = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
         public Top10Controller(IHttpClientFactory httpFactory)
         {
@@ -15,33 +19,37 @@ namespace SSSite.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var client = _httpFactory.CreateClient("Supabase");
             var vm = new Top10ViewModel();
-            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-            // Busca contagem por número (via view)
-            var resContagem = await client.GetAsync(
-                "/rest/v1/contagem_numeros?select=numero,total_sorteios,ultimo_sorteio&order=numero.asc");
-
-            var bodyContagem = await resContagem.Content.ReadAsStringAsync();
-            Console.WriteLine($"[Top10] Status contagem: {resContagem.StatusCode}");
-            Console.WriteLine($"[Top10] Body contagem: {bodyContagem}");
-
-            if (resContagem.IsSuccessStatusCode)
-                vm.Contagens = JsonSerializer.Deserialize<List<ContagemNumero>>(bodyContagem, opts) ?? new();
-
-            // Busca último sorteio
-            var resUltimo = await client.GetAsync(
-                "/rest/v1/sorteios?select=numero,sorteado_em&order=sorteado_em.desc&limit=1");
-
-            var bodyUltimo = await resUltimo.Content.ReadAsStringAsync();
-            Console.WriteLine($"[Top10] Status ultimo: {resUltimo.StatusCode}");
-            Console.WriteLine($"[Top10] Body ultimo: {bodyUltimo}");
-
-            if (resUltimo.IsSuccessStatusCode)
+            try
             {
-                var lista = JsonSerializer.Deserialize<List<UltimoSorteio>>(bodyUltimo, opts);
-                vm.Ultimo = lista?.FirstOrDefault();
+                var client = _httpFactory.CreateClient("Supabase");
+
+                // Busca todos os sorteios direto da tabela
+                var res = await client.GetAsync("/rest/v1/sorteios?select=*&order=sorteado_em.desc");
+
+                if (res.IsSuccessStatusCode)
+                {
+                    var body = await res.Content.ReadAsStringAsync();
+                    var sorteios = JsonSerializer.Deserialize<List<UltimoSorteio>>(body, _jsonOpts) ?? new();
+
+                    // Último sorteio
+                    vm.Ultimo = sorteios.FirstOrDefault();
+
+                    // Contagem por número (1 a 10) feita no C#
+                    vm.Contagens = Enumerable.Range(1, 10).Select(n => new ContagemNumero
+                    {
+                        Numero = n,
+                        TotalSorteios = sorteios.Count(s => s.Numero == n),
+                        UltimoSorteio = sorteios.Where(s => s.Numero == n)
+                                                 .Select(s => (DateTime?)s.SorteadoEm)
+                                                 .FirstOrDefault()
+                    }).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Top10] Erro: {ex.Message}");
             }
 
             return View(vm);

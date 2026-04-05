@@ -1,6 +1,4 @@
-
-using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SSSite.Models
 {
@@ -13,7 +11,10 @@ namespace SSSite.Models
 
     public class UltimoSorteio
     {
+        [JsonPropertyName("numero")]
         public int Numero { get; set; }
+
+        [JsonPropertyName("sorteado_em")]
         public DateTime SorteadoEm { get; set; }
     }
 
