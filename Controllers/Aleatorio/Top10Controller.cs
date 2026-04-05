@@ -23,20 +23,24 @@ namespace SSSite.Controllers
             var resContagem = await client.GetAsync(
                 "/rest/v1/contagem_numeros?select=numero,total_sorteios,ultimo_sorteio&order=numero.asc");
 
+            var bodyContagem = await resContagem.Content.ReadAsStringAsync();
+            Console.WriteLine($"[Top10] Status contagem: {resContagem.StatusCode}");
+            Console.WriteLine($"[Top10] Body contagem: {bodyContagem}");
+
             if (resContagem.IsSuccessStatusCode)
-            {
-                var body = await resContagem.Content.ReadAsStringAsync();
-                vm.Contagens = JsonSerializer.Deserialize<List<ContagemNumero>>(body, opts) ?? new();
-            }
+                vm.Contagens = JsonSerializer.Deserialize<List<ContagemNumero>>(bodyContagem, opts) ?? new();
 
             // Busca último sorteio
             var resUltimo = await client.GetAsync(
                 "/rest/v1/sorteios?select=numero,sorteado_em&order=sorteado_em.desc&limit=1");
 
+            var bodyUltimo = await resUltimo.Content.ReadAsStringAsync();
+            Console.WriteLine($"[Top10] Status ultimo: {resUltimo.StatusCode}");
+            Console.WriteLine($"[Top10] Body ultimo: {bodyUltimo}");
+
             if (resUltimo.IsSuccessStatusCode)
             {
-                var body = await resUltimo.Content.ReadAsStringAsync();
-                var lista = JsonSerializer.Deserialize<List<UltimoSorteio>>(body, opts);
+                var lista = JsonSerializer.Deserialize<List<UltimoSorteio>>(bodyUltimo, opts);
                 vm.Ultimo = lista?.FirstOrDefault();
             }
 
