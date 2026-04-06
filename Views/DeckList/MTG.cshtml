@@ -1,153 +1,103 @@
-﻿@using Microsoft.AspNetCore.Http
-@using SSSite.Models
-@model List<Deck>
-
+﻿@model SSSite.Models.MtgViewModel
+@using Microsoft.AspNetCore.Http
 @{
-    ViewData["Title"] = "MTG VAULT";
+    ViewData["Title"] = "Decklists MTG";
     bool eAdmin = Context.Session.GetString("ModoAdm") == "Ativo";
 }
 
-<style>
-    body {
-        background-color: #0b0b0b;
-        color: #fff;
-        font-family: 'Segoe UI', sans-serif;
-    }
+<div class="container py-4">
 
-    .text-neon {
-        color: #00d4ff;
-        text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
-    }
-
-    .btn-adm {
-        background: transparent;
-        border: 2px solid #00ff41;
-        color: #00ff41;
-        font-weight: bold;
-        transition: 0.3s;
-    }
-
-        .btn-adm:hover {
-            background: #00ff41;
-            color: #000;
-            box-shadow: 0 0 15px #00ff41;
-        }
-
-    /* BOTÕES DE AÇÃO LADO A LADO */
-    .btn-action {
-        font-size: 0.7rem;
-        padding: 2px 10px;
-        margin-left: 5px;
-        border-radius: 4px;
-        font-weight: bold;
-    }
-
-    .btn-edit {
-        border: 1px solid #ffca2c;
-        color: #ffca2c;
-        background: transparent;
-    }
-
-        .btn-edit:hover {
-            background: #ffca2c;
-            color: #000;
-        }
-
-    .btn-delete {
-        border: 1px solid #ff4d4d;
-        color: #ff4d4d;
-        background: transparent;
-    }
-
-        .btn-delete:hover {
-            background: #ff4d4d;
-            color: #fff;
-        }
-
-    .deck-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #1a1a1a;
-        border: 1px solid #333;
-        border-radius: 8px;
-        padding: 5px 15px;
-        margin-bottom: 8px;
-    }
-
-    .accordion-button {
-        background: transparent !important;
-        color: #00d4ff !important;
-        border: none !important;
-        box-shadow: none !important;
-        flex-grow: 1;
-        text-align: left;
-    }
-
-    .card-list-scroll {
-        background: #0d0d0d;
-        border: 1px solid #333;
-        border-top: none;
-        border-radius: 0 0 8px 8px;
-        max-height: 350px;
-        overflow-y: auto;
-    }
-
-    .carta-item {
-        padding: 6px 20px;
-        border-bottom: 1px solid #222;
-        display: flex;
-    }
-
-    .qtd-badge {
-        color: #00ff41;
-        font-weight: bold;
-        min-width: 35px;
-    }
-</style>
-
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-5 border-bottom border-secondary pb-3">
-        <h1 class="text-neon fw-bold m-0">MTG VAULT</h1>
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h2 class="mb-0">🃏 Decklists — Commander</h2>
         @if (eAdmin)
         {
-            <button class="btn btn-adm px-4" onclick="abrirModalCriar()">!!! NOVO DECK !!!</button>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCriarDeck">
+                Criar Deck
+            </button>
         }
     </div>
 
-    <div class="accordion" id="vaultAccordion">
-        @foreach (var deck in Model)
+    @if (!Model.Decks.Any())
+    {
+        <p class="text-muted">Nenhum deck criado ainda. Clique em "Criar Deck" para começar!</p>
+    }
+
+    @* UM ACCORDION POR DECK *@
+    <div class="accordion" id="accordionDecks">
+        @foreach (var deck in Model.Decks)
         {
-            var totalCards = deck.Cartas.Sum(c => int.Parse(c.Quantidade));
-            <div class="accordion-item bg-transparent border-0 mb-3">
-                <div class="deck-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#deck-@deck.Id">
-                        @deck.Nome.ToUpper()
+            var totalCartas = deck.Cartas.Sum(c => c.Quantidade);
+            var deckIdStr = $"deck-{deck.Id}";
+
+            <div class="accordion-item bg-dark text-white border-secondary mb-2">
+                <div class="accordion-header d-flex align-items-center px-3 py-2 gap-2">
+                    <button class="accordion-button collapsed bg-dark text-white flex-grow-1"
+                            type="button" data-bs-toggle="collapse"
+                            data-bs-target="#@deckIdStr">
+                        <span class="fw-bold">@deck.Nome</span>
+                        @if (!string.IsNullOrEmpty(deck.Comandante))
+                        {
+                            <small class="text-muted ms-2">— @deck.Comandante</small>
+                        }
+                        <span class="badge ms-3 @(totalCartas == 100 ? "bg-success" : "bg-warning text-dark")">
+                            @totalCartas / 100
+                        </span>
                     </button>
 
-                    <div class="d-flex align-items-center">
-                        <span class="badge border border-info text-info me-3">@totalCards CARDS</span>
-
+                    <div class="d-flex gap-2 ms-2">
+                        <button class="btn btn-outline-light btn-sm" onclick="copiarLista('@deck.Id')">📋 Copiar</button>
                         @if (eAdmin)
                         {
-                            <button class="btn btn-action btn-edit" onclick="abrirModalEditar(@deck.Id)">EDITAR</button>
-                            <form asp-action="ExcluirDeck" method="post" onsubmit="return confirm('Excluir deck permanentemente?');" style="display:inline;">
-                                <input type="hidden" name="id" value="@deck.Id" />
-                                <button type="submit" class="btn btn-action btn-delete">EXCLUIR</button>
+                            <button class="btn btn-outline-warning btn-sm"
+                                    data-bs-toggle="modal" data-bs-target="#modalEditar-@deck.Id">
+                                ✏️ Editar
+                            </button>
+                            <form asp-action="ExcluirDeck" method="post" class="d-inline"
+                                  onsubmit="return confirm('Excluir o deck @deck.Nome?')">
+                                <input type="hidden" name="deckId" value="@deck.Id" />
+                                <button class="btn btn-outline-danger btn-sm">🗑️ Excluir</button>
                             </form>
                         }
                     </div>
                 </div>
 
-                <div id="deck-@deck.Id" class="accordion-collapse collapse" data-bs-parent="#vaultAccordion">
-                    <div class="card-list-scroll">
-                        @foreach (var carta in deck.Cartas)
-                        {
-                            <div class="carta-item">
-                                <span class="qtd-badge">@carta.Quantidade x</span>
-                                <span class="text-light">@carta.Nome</span>
+                <div id="@deckIdStr" class="accordion-collapse collapse">
+                    <div class="accordion-body" style="max-height:400px; overflow-y:auto;">
+                        <ul class="list-unstyled mb-0" id="lista-@deck.Id">
+                            @foreach (var carta in deck.Cartas)
+                            {
+                                var scryfallUrl = $"https://scryfall.com/search?q=!\"{Uri.EscapeDataString(carta.Nome)}\"";
+                                var imgUrl = $"https://api.scryfall.com/cards/named?exact={Uri.EscapeDataString(carta.Nome)}&format=image&version=small";
+                                <li style="font-size:14px;">
+                                    <span class="text-muted">@carta.Quantidade×</span>
+                                    <a href="@scryfallUrl" target="_blank"
+                                       class="card-link text-white"
+                                       data-img="@imgUrl">@carta.Nome</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            @* MODAL EDITAR POR DECK *@
+            <div class="modal fade" id="modalEditar-@deck.Id" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content bg-dark text-white">
+                        <form asp-action="SalvarCartas" method="post">
+                            <input type="hidden" name="deckId" value="@deck.Id" />
+                            <div class="modal-header border-secondary">
+                                <h5 class="modal-title">Editar — @deck.Nome</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
-                        }
+                            <div class="modal-body">
+                                <textarea name="listaTexto" class="form-control bg-dark text-white border-secondary"
+                                          rows="15" style="font-family:monospace;">@deck.Lista</textarea>
+                            </div>
+                            <div class="modal-footer border-secondary">
+                                <button type="submit" class="btn btn-success w-100">💾 Salvar Lista</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -155,49 +105,74 @@
     </div>
 </div>
 
-@if (eAdmin)
-{
-    <div class="modal fade" id="modalDeck" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content bg-dark border-info shadow-lg">
-                <form asp-action="SalvarDeck" method="post" class="modal-body p-4">
-                    <input type="hidden" name="id" id="deckIdField">
-                    <h5 class="text-neon mb-4 fw-bold" id="modalTitulo">NOVO DECK</h5>
-
-                    <input type="text" name="nome" id="nomeDeckInput" class="form-control bg-black text-white border-secondary mb-3 shadow-none" placeholder="Nome do Deck" required>
-                    <textarea name="cartasRaw" id="cartasRawInput" class="form-control bg-black text-white border-secondary mb-3 shadow-none" rows="10" placeholder="4 Lightning Bolt"></textarea>
-
-                    <button type="submit" class="btn btn-adm w-100">!!! SALVAR NO COFRE !!!</button>
-                </form>
-            </div>
+@* MODAL CRIAR DECK *@
+<div class="modal fade" id="modalCriarDeck" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark text-white">
+            <form asp-action="CriarDeckComLista" method="post">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">Criar Deck</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nome do Deck</label>
+                        <input type="text" name="nome" class="form-control bg-dark text-white border-secondary"
+                               placeholder="Ex: Atraxa Proliferate" required maxlength="100">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Comandante</label>
+                        <input type="text" name="comandante" class="form-control bg-dark text-white border-secondary"
+                               placeholder="Ex: Atraxa, Praetors' Voice" maxlength="100">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Lista de Cartas</label>
+                        <p class="text-muted small mb-1">Cole no formato: <code>1 Sol Ring</code>, uma carta por linha.</p>
+                        <textarea name="listaTexto" class="form-control bg-dark text-white border-secondary"
+                                  rows="12" placeholder="1 Sol Ring&#10;1 Command Tower&#10;4 Lightning Bolt"
+                                  style="font-family:monospace;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="submit" class="btn btn-primary w-100">✅ Criar e Salvar</button>
+                </div>
+            </form>
         </div>
     </div>
-}
+</div>
 
-<script>
-    let meuModal = null;
-    document.addEventListener('DOMContentLoaded', function() {
-        const modalEl = document.getElementById('modalDeck');
-        if(modalEl) meuModal = new bootstrap.Modal(modalEl);
-    });
+@section Scripts {
+    <script>
+        // Tooltip de imagem
+        const tooltip = document.createElement('div');
+        tooltip.style.cssText = 'position:fixed;z-index:9999;pointer-events:none;display:none;border-radius:8px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.8);';
+        const tooltipImg = document.createElement('img');
+        tooltipImg.style.cssText = 'width:250px;display:block;';
+        tooltip.appendChild(tooltipImg);
+        document.body.appendChild(tooltip);
 
-    function abrirModalCriar() {
-        document.getElementById('deckIdField').value = "";
-        document.getElementById('nomeDeckInput').value = "";
-        document.getElementById('cartasRawInput').value = "";
-        document.getElementById('modalTitulo').innerText = "NOVO DECK";
-        meuModal.show();
-    }
+        document.querySelectorAll('.card-link').forEach(link => {
+            link.addEventListener('mouseenter', e => {
+                tooltipImg.src = link.dataset.img;
+                tooltip.style.display = 'block';
+            });
+            link.addEventListener('mousemove', e => {
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY - 80) + 'px';
+            });
+            link.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+                tooltipImg.src = '';
+            });
+        });
 
-    async function abrirModalEditar(id) {
-        const resp = await fetch(`/MTG/ObterDadosEdicao?id=${id}`);
-        if(resp.ok) {
-            const data = await resp.json();
-            document.getElementById('deckIdField').value = data.id;
-            document.getElementById('nomeDeckInput').value = data.nome;
-            document.getElementById('cartasRawInput').value = data.cartas;
-            document.getElementById('modalTitulo').innerText = "EDITAR DECK";
-            meuModal.show();
+        function copiarLista(deckId) {
+            const linhas = [];
+            document.querySelectorAll('#lista-' + deckId + ' li').forEach(li => {
+                linhas.push(li.innerText.replace('×', '').replace(/\s+/, ' ').trim());
+            });
+            navigator.clipboard.writeText(linhas.join('\n'));
+            alert('Lista copiada!');
         }
-    }
-</script>
+    </script>
+}

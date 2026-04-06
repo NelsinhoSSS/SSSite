@@ -1,14 +1,35 @@
-﻿public class Deck
-{
-    public int Id { get; set; } // O banco usará isso para identificar o deck
-    public string Nome { get; set; }
-    public List<Carta> Cartas { get; set; } = new List<Carta>();
-}
+﻿using System.Text.Json.Serialization;
 
-public class Carta
+namespace SSSite.Models
 {
-    public int Id { get; set; } // O banco usará isso para identificar a carta
-    public string Quantidade { get; set; }
-    public string Nome { get; set; }
-    public int DeckId { get; set; } // Elo de ligação com o Deck
+    public class MtgDeck
+    {
+        [JsonPropertyName("id")]
+        public long Id { get; set; }
+
+        [JsonPropertyName("nome")]
+        public string Nome { get; set; } = "";
+
+        [JsonPropertyName("comandante")]
+        public string? Comandante { get; set; }
+
+        [JsonPropertyName("lista")]
+        public string? Lista { get; set; }
+
+        [JsonPropertyName("criado_em")]
+        public DateTime CriadoEm { get; set; }
+
+        public List<MtgCarta> Cartas { get; set; } = new();
+    }
+
+    public class MtgCarta
+    {
+        public int Quantidade { get; set; }
+        public string Nome { get; set; } = "";
+    }
+
+    public class MtgViewModel
+    {
+        public List<MtgDeck> Decks { get; set; } = new();
+    }
 }
