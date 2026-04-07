@@ -1,17 +1,32 @@
-﻿namespace SSSite.Models
+﻿using System.Text.Json.Serialization;
+
+namespace SSSite.Models
 {
-    public class YugiohDeck
+    public class YuGiOhDeck
     {
-        public int Id { get; set; }
+        [JsonPropertyName("id")]
+        public long Id { get; set; }
+
+        [JsonPropertyName("nome")]
         public string Nome { get; set; } = "";
-        public List<YugiohCarta> Cartas { get; set; } = new List<YugiohCarta>();
+
+        [JsonPropertyName("lista")]
+        public string? Lista { get; set; }
+
+        [JsonPropertyName("criado_em")]
+        public DateTime CriadoEm { get; set; }
+
+        public List<YuGiOhCarta> Cartas { get; set; } = new();
     }
 
-    public class YugiohCarta
+    public class YuGiOhCarta
     {
-        public int Id { get; set; }
+        public int Quantidade { get; set; }
         public string Nome { get; set; } = "";
-        public string Quantidade { get; set; } = "";
-        public int YugiohDeckId { get; set; } // Chave estrangeira
+    }
+
+    public class YuGiOhViewModel
+    {
+        public List<YuGiOhDeck> Decks { get; set; } = new();
     }
 }
