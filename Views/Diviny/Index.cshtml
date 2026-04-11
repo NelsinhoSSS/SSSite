@@ -1,0 +1,361 @@
+﻿@{
+    ViewData["Title"] = "Diviny";
+    Layout = "_Layout";
+}
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .diviny-page {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    padding: 1rem;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #diviny-app {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .diviny-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+
+  .header { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid #333; margin-bottom: 16px; }
+  .color-bars { display: flex; gap: 3px; }
+  .color-bar { width: 8px; height: 26px; border-radius: 2px; }
+  .header-title { font-size: 16px; font-weight: 500; color: #fff; }
+  .header-sub { font-size: 12px; color: #888; }
+
+  #messages { flex: 1; overflow-y: auto; padding-bottom: 16px; }
+
+  .msg { display: flex; margin-bottom: 16px; }
+  .msg.user { justify-content: flex-end; }
+  .msg.assistant { justify-content: flex-start; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #4A7BBF; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; margin-right: 8px; flex-shrink: 0; margin-top: 2px; }
+  .bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+  .msg.user .bubble { background: #4A7BBF; color: #fff; border-radius: 16px 16px 4px 16px; }
+  .msg.assistant .bubble { background: #242424; color: #eee; border-radius: 16px 16px 16px 4px; }
+
+  .stats-card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 14px 16px; margin-top: 10px; max-width: 420px; }
+  .stats-header { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .stats-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; color: #fff; }
+  .stats-summary { font-size: 13px; color: #aaa; line-height: 1.5; flex: 1; }
+  .mana-bar { display: flex; gap: 5px; flex-wrap: wrap; margin: 6px 0; }
+  .mana-pip { font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 20px; border: 1.5px solid; }
+  .stat-row { margin-bottom: 9px; }
+  .stat-label-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px; color: #ccc; }
+  .stat-track { height: 6px; background: #333; border-radius: 3px; overflow: hidden; }
+  .stat-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+  .sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .sw-box { border-radius: 8px; padding: 10px 12px; }
+  .sw-title { font-size: 11px; font-weight: 500; margin-bottom: 4px; }
+  .sw-text { font-size: 12px; line-height: 1.5; }
+
+  .input-row { display: flex; gap: 8px; padding-top: 8px; border-top: 1px solid #333; }
+  #chat-input { flex: 1; padding: 10px 14px; border-radius: 22px; font-size: 14px; border: 1px solid #444; background: #1a1a1a; color: #fff; font-family: inherit; resize: none; outline: none; line-height: 1.5; }
+  #send-btn { width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer; background: #4A7BBF; color: #fff; font-size: 18px; flex-shrink: 0; }
+  #send-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+</style>
+
+<div class="diviny-page">
+
+  <!-- CHAT -->
+  <div id="diviny-app">
+    <div class="header">
+      <div class="color-bars">
+        <div class="color-bar" style="background:#C8B96E"></div>
+        <div class="color-bar" style="background:#4A7BBF"></div>
+        <div class="color-bar" style="background:#7B5BA0"></div>
+        <div class="color-bar" style="background:#BF5A3A"></div>
+        <div class="color-bar" style="background:#3AB05A"></div>
+      </div>
+      <div>
+        <div class="header-title">Diviny</div>
+        <div class="header-sub">Sua assistente de Magic: The Gathering</div>
+      </div>
+    </div>
+
+    <div id="messages"></div>
+
+    <div class="input-row">
+      <textarea id="chat-input" rows="1" placeholder="Fale com a Diviny..."></textarea>
+      <button id="send-btn" onclick="send()">↑</button>
+    </div>
+  </div>
+
+  <!-- PAINEL LATERAL — Funções da Diviny -->
+  <div class="diviny-sidebar">
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:20px;">
+
+      <!-- Barrinhas das 5 cores -->
+      <div style="display:flex;gap:3px;margin-bottom:12px;">
+        <div style="width:8px;height:6px;border-radius:2px;background:#C8B96E"></div>
+        <div style="width:8px;height:6px;border-radius:2px;background:#4A7BBF"></div>
+        <div style="width:8px;height:6px;border-radius:2px;background:#7B5BA0"></div>
+        <div style="width:8px;height:6px;border-radius:2px;background:#BF5A3A"></div>
+        <div style="width:8px;height:6px;border-radius:2px;background:#3AB05A"></div>
+      </div>
+
+      <div style="font-size:15px;font-weight:500;color:#fff;margin-bottom:4px;">O que a Diviny faz?</div>
+      <div style="font-size:12px;color:#888;margin-bottom:20px;">Sua assistente especialista em MTG</div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+
+        <!-- Análise de Deck -->
+        <div style="background:#242424;border-radius:10px;padding:12px;">
+          <div style="font-size:13px;font-weight:500;color:#C8B96E;margin-bottom:4px;">⬡ Análise de Deck</div>
+          <div style="font-size:12px;color:#aaa;line-height:1.5;">Cole sua lista e receba uma análise completa com notas, curva de mana, distribuição de cartas e sugestões de melhoria.</div>
+        </div>
+
+        <!-- Avaliação de Cartas -->
+        <div style="background:#242424;border-radius:10px;padding:12px;">
+          <div style="font-size:13px;font-weight:500;color:#4A7BBF;margin-bottom:4px;">◈ Avaliação de Cartas</div>
+          <div style="font-size:12px;color:#aaa;line-height:1.5;">Peça uma nota para qualquer carta e receba estatísticas de poder, sinergia, velocidade e resiliência.</div>
+        </div>
+
+        <!-- Regras e Interações -->
+        <div style="background:#242424;border-radius:10px;padding:12px;">
+          <div style="font-size:13px;font-weight:500;color:#7B5BA0;margin-bottom:4px;">⚖ Regras & Interações</div>
+          <div style="font-size:12px;color:#aaa;line-height:1.5;">Tire dúvidas sobre regras, interações complexas, mecânicas novas e casos específicos de Commander.</div>
+        </div>
+
+        <!-- Novidades do Meta -->
+        <div style="background:#242424;border-radius:10px;padding:12px;">
+          <div style="font-size:13px;font-weight:500;color:#3AB05A;margin-bottom:4px;">🌐 Novidades do Meta</div>
+          <div style="font-size:12px;color:#aaa;line-height:1.5;">Pergunte sobre novas coleções, banimentos, tier lists e tendências atuais do meta.</div>
+        </div>
+
+        <!-- Lore e História -->
+        <div style="background:#242424;border-radius:10px;padding:12px;">
+          <div style="font-size:13px;font-weight:500;color:#BF5A3A;margin-bottom:4px;">📖 Lore & História</div>
+          <div style="font-size:12px;color:#aaa;line-height:1.5;">Explore o universo de MTG — planos, personagens, histórias e a lore por trás das coleções.</div>
+        </div>
+
+      </div>
+
+      <!-- Rodapé -->
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid #333;font-size:11px;color:#555;line-height:1.6;">
+        Powered by <span style="color:#888;">Groq · LLaMA 3.3</span><br>
+        Dados via <span style="color:#888;">Scryfall · EDHREC</span>
+      </div>
+
+    </div>
+  </div>
+  <!-- FIM DO PAINEL LATERAL -->
+
+</div>
+
+<script>
+const COLORS = {
+  W: { label: "White", bg: "#FAF8F0", border: "#C8B96E", text: "#6B5B1A", sym: "☀" },
+  U: { label: "Blue",  bg: "#E8F0FA", border: "#4A7BBF", text: "#1A3A6B", sym: "💧" },
+  B: { label: "Black", bg: "#F0ECF5", border: "#7B5BA0", text: "#3A1A5F", sym: "💀" },
+  R: { label: "Red",   bg: "#FAF0EC", border: "#BF5A3A", text: "#6B1A0A", sym: "🔥" },
+  G: { label: "Green", bg: "#EDFAF0", border: "#3AB05A", text: "#0A4A1A", sym: "🌿" },
+};
+const STAT_LABELS = [
+  { key: "power",       label: "Poder Geral"  },
+  { key: "consistency", label: "Consistência" },
+  { key: "synergy",     label: "Sinergia"     },
+  { key: "finisher",    label: "Finisher"     },
+  { key: "speed",       label: "Velocidade"   },
+  { key: "resilience",  label: "Resiliência"  },
+];
+
+let history = [];
+let loading = false;
+
+function statColor(v) {
+  return v >= 8 ? "#3AB05A" : v >= 6 ? "#4A7BBF" : v >= 4 ? "#C8B96E" : "#BF5A3A";
+}
+
+function parseStats(text) {
+  const m = text.match(/<mtg_stats>([\s\S]*?)<\/mtg_stats>/);
+  if (!m) return null;
+  try { return JSON.parse(m[1].trim()); } catch { return null; }
+}
+
+function cleanText(text) {
+  return text.replace(/<mtg_stats>[\s\S]*?<\/mtg_stats>/g, "").trim();
+}
+
+function buildStatsCard(data) {
+  const vals = STAT_LABELS.map(s => data.stats?.[s.key] || 0);
+  const avg = vals.reduce((a,b)=>a+b,0) / vals.length;
+  const r = 30, circ = 2*Math.PI*r, color = statColor(avg);
+  const offset = circ*(1-Math.min(avg/10,1));
+
+  const manaPips = "";
+
+  const badges = [
+    data.commander   ? `<span style="background:#1a2a3a;border:1.5px solid #4A7BBF;color:#7EB8F7;font-size:11px;font-weight:500;padding:2px 10px;border-radius:20px">⚔ ${data.commander}</span>` : "",
+    data.avg_cmc     ? `<span style="background:#1a1a2a;border:1.5px solid #7B5BA0;color:#B07BF0;font-size:11px;font-weight:500;padding:2px 10px;border-radius:20px">CMC médio: ${Number(data.avg_cmc).toFixed(1)}</span>` : "",
+    data.total_cards ? `<span style="background:#1a2a1a;border:1.5px solid #3AB05A;color:#7BF0A0;font-size:11px;font-weight:500;padding:2px 10px;border-radius:20px">${data.total_cards} cartas</span>` : "",
+  ].filter(Boolean).join(" ");
+
+  const statRows = STAT_LABELS.map(({key,label}) => {
+    const v = data.stats?.[key] || 0;
+    return `<div class="stat-row">
+      <div class="stat-label-row"><span>${label}</span><span style="font-weight:500;color:${statColor(v)}">${Number(v).toFixed(1)}</span></div>
+      <div class="stat-track"><div class="stat-fill" style="width:${Math.round((v/10)*100)}%;background:${statColor(v)}"></div></div>
+    </div>`;
+  }).join("");
+
+  let cardCountsHtml = "";
+  if (data.card_counts) {
+    const cc = data.card_counts;
+    const cats = [
+      { key:"lands",     label:"Lands",     color:"#C8B96E", ideal:"35-38" },
+      { key:"ramp",      label:"Ramp",      color:"#3AB05A", ideal:"8-12"  },
+      { key:"removal",   label:"Remoção",   color:"#BF5A3A", ideal:"8-12"  },
+      { key:"card_draw", label:"Card Draw", color:"#4A7BBF", ideal:"8-12"  },
+      { key:"creatures", label:"Criaturas", color:"#7B5BA0", ideal:"—"     },
+      { key:"other",     label:"Outros",    color:"#888",    ideal:"—"     },
+    ];
+    cardCountsHtml = `<div style="margin-top:14px;padding-top:12px;border-top:1px solid #333">
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px;color:#ccc">Distribuição de cartas</div>
+      ${cats.map(c => {
+        const v = cc[c.key] || 0;
+        return `<div style="margin-bottom:7px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px">
+            <span style="color:#ccc">${c.label} <span style="color:#666;font-size:11px">(ideal: ${c.ideal})</span></span>
+            <span style="font-weight:500;color:#ccc">${v}</span>
+          </div>
+          <div style="height:5px;background:#333;border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${Math.min(100,Math.round((v/40)*100))}%;background:${c.color};border-radius:3px"></div>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>`;
+  }
+
+  let oddsHtml = "";
+  if (data.odd_cards?.length) {
+    oddsHtml = `<div style="margin-top:12px;padding:10px 12px;background:#2a2000;border:0.5px solid #C8B96E;border-radius:8px">
+      <div style="font-size:11px;font-weight:500;color:#C8B96E;margin-bottom:6px">Cartas fora do contexto</div>
+      ${data.odd_cards.map((c,i) => {
+        const suggestion = data.suggestions?.[i] || "";
+        const sugName = suggestion.split(" no lugar de")[0].trim();
+        return `<div style="font-size:12px;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+          <span style="color:#BF5A3A;font-weight:500">✕ ${c}</span>
+          ${sugName ? `<span style="color:#555">→</span><span style="color:#3AB05A;font-weight:500">✓ ${sugName}</span>` : ""}
+        </div>`;
+      }).join("")}
+    </div>`;
+  }
+
+  const sw = `<div class="sw-grid">
+    ${data.strengths ? `<div class="sw-box" style="background:#0a2a0a;border:0.5px solid #3AB05A">
+      <div class="sw-title" style="color:#3AB05A">Forças</div>
+      <div class="sw-text" style="color:#7BF0A0">${data.strengths.slice(0,220)}</div></div>` : ""}
+    ${data.weaknesses ? `<div class="sw-box" style="background:#2a0a0a;border:0.5px solid #BF5A3A">
+      <div class="sw-title" style="color:#BF5A3A">Fraquezas</div>
+      <div class="sw-text" style="color:#F07B7B">${data.weaknesses.slice(0,220)}</div></div>` : ""}
+  </div>`;
+
+  return `<div class="stats-card">
+    <div class="stats-name">${data.name}</div>
+    <div class="mana-bar">${manaPips}</div>
+    ${badges ? `<div style="display:flex;flex-wrap:wrap;gap:5px;margin:6px 0">${badges}</div>` : ""}
+    <div class="stats-header">
+      <svg width="76" height="76" viewBox="0 0 76 76" style="flex-shrink:0">
+        <circle cx="38" cy="38" r="${r}" fill="none" stroke="#333" stroke-width="7"/>
+        <circle cx="38" cy="38" r="${r}" fill="none" stroke="${color}" stroke-width="7"
+          stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
+          stroke-linecap="round" transform="rotate(-90 38 38)"/>
+        <text x="38" y="34" text-anchor="middle" font-size="15" font-weight="500" fill="${color}">${avg.toFixed(1)}</text>
+        <text x="38" y="46" text-anchor="middle" font-size="9" fill="#888">/10</text>
+      </svg>
+      <p class="stats-summary">${data.summary || ""}</p>
+    </div>
+    ${statRows}${sw}${cardCountsHtml}${oddsHtml}
+  </div>`;
+}
+
+function addMessage(role, content, stats) {
+  const wrap = document.getElementById("messages");
+  const div = document.createElement("div");
+  div.className = `msg ${role}`;
+  const cleaned = cleanText(content).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  if (role === "assistant") {
+    div.innerHTML = `<div class="avatar">✦</div>
+      <div>
+        <div class="bubble">${cleaned}</div>
+        ${stats ? buildStatsCard(stats) : ""}
+      </div>`;
+  } else {
+    div.innerHTML = `<div class="bubble">${cleaned}</div>`;
+  }
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
+}
+
+async function fetchScryfall(name) {
+  try {
+    const r = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(name)}`);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+async function send(preset) {
+  const inputEl = document.getElementById("chat-input");
+  const txt = (preset || inputEl.value).trim();
+  if (!txt || loading) return;
+  inputEl.value = "";
+  loading = true;
+  document.getElementById("send-btn").disabled = true;
+
+  addMessage("user", txt);
+  history.push({ role: "user", content: txt });
+
+  const loadingDiv = addMessage("assistant", "Pensando...");
+
+  let extra = "";
+  const cardMatch = txt.match(/(?:nota para|analise|avalia|fale sobre a carta)\s+([A-Za-zÀ-ú\s',-]{3,40})/i);
+  if (cardMatch) {
+    const card = await fetchScryfall(cardMatch[1].trim());
+    if (card) extra = `\n\n[Dados Scryfall: ${card.name}, CMC ${card.cmc}, ${card.type_line}, EDHREC rank: ${card.edhrec_rank || "?"}]`;
+  }
+
+  const messages = [...history];
+  messages[messages.length-1] = { role: "user", content: txt + extra };
+
+  try {
+    const res = await fetch("/Diviny/Chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages })
+    });
+    const data = await res.json();
+    const text = data.content?.map(b => b.text||"").join("\n") || "Não entendi.";
+    const stats = parseStats(text);
+    history.push({ role: "assistant", content: text });
+    loadingDiv.remove();
+    addMessage("assistant", text, stats);
+  } catch {
+    loadingDiv.remove();
+    addMessage("assistant", "Erro ao conectar. Tente novamente.");
+  } finally {
+    loading = false;
+    document.getElementById("send-btn").disabled = false;
+  }
+}
+
+document.getElementById("chat-input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+});
+
+addMessage("assistant", "Olá! Sou a Diviny, sua assistente especialista em Magic: The Gathering. Posso conversar sobre qualquer assunto — novas coleções, regras, estratégias, lore — e quando quiser, é só me pedir para analisar uma carta ou deck completo. Como posso ajudar?");
+</script>

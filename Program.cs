@@ -19,7 +19,7 @@ else
 }
 
 // 2. SERVIÇOS E CONTROLLERS
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient(); // usado pelo MtgController para chamar a API do Gemini
 builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {

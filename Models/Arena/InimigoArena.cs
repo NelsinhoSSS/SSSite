@@ -47,7 +47,7 @@ namespace SSSite.Models
                 new InimigoArena { Nome = "SENTINEL UNIT", VidaMax = 150, Raio = 25, Cor = "#555", IATipo = "BOUNCE", Forma = "R", Quantidade = 1, DanoContato = 30f, Velocidade = 3.5f },
 
                 // FASE 2: Introdução a projéteis.
-                new InimigoArena { Nome = "PLASMA CORE", VidaMax = 400, Raio = 35, Cor = "#e67e22", IATipo = "BOUNCE", Forma = "C", Quantidade = 1, DisparaRaios = true, IntervaloTiroSeg = 0.8f, VelRaio = 4.5f, DanoRaio = 15, DanoContato = 40f, Velocidade = 2.8f },
+                new InimigoArena { Nome = "PLASMA CORE", VidaMax = 500, Raio = 35, Cor = "#e67e22", IATipo = "BOUNCE", Forma = "C", Quantidade = 1, DisparaRaios = true, IntervaloTiroSeg = 0.8f, VelRaio = 4.5f, DanoRaio = 15, DanoContato = 40f, Velocidade = 2.8f },
 
                 // FASE 3: O teste de esquiva circular (Bullet Hell leve).
                 new InimigoArena { Nome = "BLADE MASTER", VidaMax = 700, Raio = 40, Cor = "#9b59b6", IATipo = "BOUNCE", Forma = "C", Quantidade = 1, TemEspadas = true, QtdEspadas = 4, RaioOrbita = 110, VelRotacao = 0.04f, DanoContato = 50f, Velocidade = 3.0f },
@@ -56,13 +56,13 @@ namespace SSSite.Models
                 new InimigoArena { Nome = "TRIANGLE FRENZY", VidaMax = 500, Raio = 45, Cor = "#f1c40f", IATipo = "BOUNCE", Forma = "T", Quantidade = 3, DanoContato = 40f, Velocidade = 7.5f },
 
                 // FASE 5: Mecânica de divisão. Ao morrer, ele spawna cópias menores (lógica no JS).
-                new InimigoArena { Nome = "THE VOID SPLITTER", VidaMax = 1200, Raio = 60, Cor = "#ffffff", IATipo = "BOUNCE", Forma = "H", Multiplo = true, Quantidade = 1, DanoContato = 60f, Velocidade = 2.0f },
+                new InimigoArena { Nome = "THE VOID SPLITTER", VidaMax = 600, Raio = 60, Cor = "#ffffff", IATipo = "BOUNCE", Forma = "H", Multiplo = true, Quantidade = 1, DanoContato = 60f, Velocidade = 2.0f },
 
                 // FASE 6: Predador. Ele para e dá um dash na direção do player.
-                new InimigoArena { Nome = "PHANTOM STRIKER", VidaMax = 2000, Raio = 35, Cor = "#00ffff", IATipo = "DASH", Forma = "C", Quantidade = 1, TempoDashSeg = 1.0f, DanoContato = 80f, Velocidade = 1.5f },
+                new InimigoArena { Nome = "PHANTOM STRIKER", VidaMax = 1200, Raio = 35, Cor = "#00ffff", IATipo = "DASH", Forma = "C", Quantidade = 1, TempoDashSeg = 1.0f, DanoContato = 80f, Velocidade = 1.5f },
 
                 // FASE 7: O ápice. Combina projéteis rápidos com a mecânica de Buraco Negro.
-                new InimigoArena { Nome = "THE SINGULARITY", VidaMax = 5500, Raio = 70, Cor = "#6200ea", IATipo = "FINAL_BOSS", Forma = "C", Quantidade = 1, DisparaRaios = true, IntervaloTiroSeg = 0.15f, VelRaio = 5.5f, DanoRaio = 10, TempoBlackHoleSeg = 7.0f, DanoContato = 100f, Velocidade = 1.0f }
+                new InimigoArena { Nome = "THE SINGULARITY", VidaMax = 3000, Raio = 70, Cor = "#6200ea", IATipo = "FINAL_BOSS", Forma = "C", Quantidade = 1, DisparaRaios = true, IntervaloTiroSeg = 0.15f, VelRaio = 5.5f, DanoRaio = 10, TempoBlackHoleSeg = 7.0f, DanoContato = 100f, Velocidade = 1.0f }
             };
         }
     }
