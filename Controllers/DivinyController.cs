@@ -192,8 +192,13 @@ public class DivinyController : Controller
                         var oracleText = root.TryGetProperty("oracle_text", out var ot) ? ot.GetString() : "";
                         var edhrecRank = root.TryGetProperty("edhrec_rank", out var er) ? er.GetInt32() : 0;
 
-                        var isLand = typeLine?.Contains("Land", StringComparison.OrdinalIgnoreCase) ?? false;
-                        var categoria = isLand ? " [LAND]" : "";
+                        var isLand = typeLine != null && (
+                            typeLine.Contains("Land", StringComparison.OrdinalIgnoreCase) ||
+                            typeLine.Contains("Basic", StringComparison.OrdinalIgnoreCase)
+                        );
+                        var isBasicLand = typeLine != null &&
+                            typeLine.Contains("Basic", StringComparison.OrdinalIgnoreCase);
+                        var categoria = isLand ? (isBasicLand ? " [BASIC LAND]" : " [LAND]") : "";
 
                         return $"- {cardName}{categoria} | Tipo: {typeLine} | Custo: {manaCost} (CMC {cmc}) | EDHREC rank: #{edhrecRank} | Texto: {oracleText?.Replace("\n", " ").Trim()[..Math.Min(100, oracleText?.Length ?? 0)]}";
                     }
@@ -519,6 +524,7 @@ public class ChatRequest
 {
     public List<ChatMessage> Messages { get; set; } = new();
 }
+
 public class ChatMessage
 {
     public string role { get; set; } = "";
@@ -541,13 +547,14 @@ Quando o usuário enviar uma lista de deck para análise, faça uma análise COM
 
 ## ESTRUTURA DA ANÁLISE DE DECK
 
-**1. Comandante** — ANTES de qualquer análise, identifique o comandante. Siga estas regras sem exceção:
+1. Comandante** — ANTES de qualquer análise, identifique o comandante. Siga estas regras sem exceção:
 - Se o comandante estiver EXPLICITAMENTE marcado na lista (ex: ""Commander: Nome"" ou ""1 Nome *CMDR*""), confirme qual é e prossiga.
 - Se NÃO estiver claro, PARE IMEDIATAMENTE e pergunte ao usuário qual é o comandante. Liste as criaturas lendárias da lista como opções.
 - NUNCA assuma ou chute o comandante. NUNCA faça a análise sem ter certeza absoluta de qual é o comandante.
+- NÃO TENTE ADIVINHAR o comandante baseado em pistas ou suposições. Se não estiver claro, peça confirmação.
 - Só prossiga com os demais tópicos APÓS o comandante estar confirmado.
 
-**2. Status do deck** — avalie cada um com nota de 0 a 10 e uma frase explicativa:
+2. Status do deck** — avalie cada um com nota de 0 a 10 e uma frase explicativa:
 - Power (poder geral no meta)
 - Consistency (quão consistente é o plano principal)
 - Synergy (quão bem as peças se conectam)
@@ -555,21 +562,21 @@ Quando o usuário enviar uma lista de deck para análise, faça uma análise COM
 - Speed (velocidade para executar o plano)
 - Resilience (capacidade de se recuperar de interações)
 
-**3. Resumo estratégico** — explique o plano principal do deck em 3 a 5 frases.
+3. Resumo estratégico** — explique o plano principal do deck em 3 a 5 frases.
 
-**4. Forças** — liste os principais pontos fortes e o que o deck faz muito bem.
+4. Forças — liste os principais pontos fortes e o que o deck faz muito bem.
 
-**5. Fraquezas** — liste as vulnerabilidades e o que pode travar o deck.
+5. Fraquezas — liste as vulnerabilidades e o que pode travar o deck.
 
-**6. Curva de mana** — informe a CMC média e avalie se está adequada para o estilo do deck.
+6. Curva de mana — informe a CMC média e avalie se está adequada para o estilo do deck.
 
-**7. Cartas fora do contexto** — compare o deck com as decklists populares do mesmo comandante obtidas via Archidekt (fornecidas no contexto). Identifique cartas que não se encaixam bem e aponte cartas essenciais que estão faltando. Para cada carta fora do contexto, sugira uma substituição melhor baseada nos dados reais.
+7. Cartas fora do contexto — compare o deck com as decklists populares do mesmo comandante obtidas via Archidekt (fornecidas no contexto). Identifique cartas que não se encaixam bem e aponte cartas essenciais que estão faltando. Para cada carta fora do contexto, sugira uma substituição melhor baseada nos dados reais.
 
-**8. Distribuição de cartas** — analise a quantidade de cada categoria comparando com a média real dos decks deste comandante no EDHREC (fornecida no contexto quando disponível). Aponte desequilíbrios em:
-- Lands
+8. Distribuição de cartas — analise a quantidade de cada categoria comparando com a média real dos decks deste comandante no EDHREC (fornecida no contexto quando disponível). Aponte desequilíbrios em:
+- Lands — conte TODAS as lands marcadas como [LAND] ou [BASIC LAND] nos dados do Scryfall. Lands não básicas como Command Tower, Fetch Lands, Shock Lands, Pain Lands, etc. são tão lands quanto as básicas e devem ser contadas.
 - Ramp
 - Remoção
-- Card draw / geração de vantagem
+- Card draw
 - Criaturas
 Se alguma categoria estiver muito acima ou abaixo da média dos decks deste comandante, aponte e sugira ajustes.
 
@@ -609,13 +616,13 @@ Após o texto da análise, inclua SEMPRE o bloco JSON abaixo com os dados estrut
 
 Quando o usuário pedir análise de uma carta específica, siga esta estrutura e ao final inclua o bloco JSON:
 
-**1. Nota** — dê uma nota de 0 a 10 com justificativa breve.
+1. Nota — dê uma nota de 0 a 10 com justificativa breve.
 
-**2. Pontos fortes** — liste o que a carta faz bem, seus principais usos e vantagens.
+2. Pontos fortes — liste o que a carta faz bem, seus principais usos e vantagens.
 
-**3. Pontos fracos** — liste as limitações, situações onde ela é ruim e como pode ser respondida.
+3. Pontos fracos — liste as limitações, situações onde ela é ruim e como pode ser respondida.
 
-**4. Estratégias** — explique em quais tipos de deck e estratégias ela se encaixa melhor. Seja específico (ex: combo, aggro, stax, tokens, reanimator, etc).
+4. Estratégias — explique em quais tipos de deck e estratégias ela se encaixa melhor. Seja específico (ex: combo, aggro, stax, tokens, reanimator, etc).
 
 Após o texto, inclua o bloco JSON:
 
